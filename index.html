@@ -165,8 +165,14 @@ const sb = {
   /* PRINT STYLES */
   #print-area { display:none; }
   @media print {
-    /* プレビュー内容だけ印刷 */
     body > * { display:none !important; }
+    #pdf-preview-modal { display:flex !important; position:fixed !important; inset:0 !important; background:white !important; flex-direction:column !important; z-index:9999 !important; }
+    #pdf-preview-modal > div:first-child,
+    #pdf-preview-modal > div:nth-child(2),
+    #pdf-preview-modal > div:last-child { display:none !important; }
+    #pdf-preview-content { display:block !important; overflow:visible !important; max-height:none !important; flex:1; background:white !important; }
+    body { background:white !important; }
+  }
     #pdf-preview-modal { display:block !important; position:static !important; background:white !important; }
     #pdf-preview-modal > div:first-child,
     #pdf-preview-modal > div:nth-child(2),
@@ -1328,50 +1334,91 @@ function switchSpTab(idx) {
   const ps = getPS();
   if (!tbs || idx >= tbs.length) return;
 
-  // タブボタンのスタイル更新
   document.querySelectorAll('.sp-tab-btn').forEach((btn, i) => {
     btn.style.background = i===idx ? 'var(--green)' : 'white';
     btn.style.color = i===idx ? 'white' : 'var(--green)';
-    btn.style.borderColor = 'var(--green-mid)';
   });
 
   const tb = tbs[idx];
   const rows = ((ps[sid]||{}).data||{})[tb.key]||[];
   const filled = rows.filter(r=>r.date||r.ct||r.review||r.retest||r.precheck).length;
+  const isKokugo = tb.name.includes('国語文章題');
+  const is10min  = tb.name.includes('10分テスト');
 
-  let tableHtml = `
-    <div style="font-size:12px;color:var(--text-sub);margin-bottom:8px">${filled}/${rows.length}件入力済</div>
+  let tableHtml = `<div style="font-size:12px;color:var(--text-sub);margin-bottom:8px">${filled}/${rows.length}件入力済</div>
     <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
-    <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:380px">
-      <tr style="background:#f5f5f5;position:sticky;top:0">
-        <th style="padding:5px 6px;border:1px solid #ddd;text-align:left;white-space:nowrap">STEP</th>
-        <th style="padding:5px 6px;border:1px solid #ddd;text-align:left">タイトル</th>
-        <th style="padding:5px 6px;border:1px solid #ddd;text-align:center;white-space:nowrap">P</th>
-        <th style="padding:5px 6px;border:1px solid #ddd;text-align:center;white-space:nowrap">実施日</th>
-        <th style="padding:5px 6px;border:1px solid #ddd;text-align:center">CT</th>
-        <th style="padding:5px 6px;border:1px solid #ddd;text-align:center">補習</th>
-        <th style="padding:5px 6px;border:1px solid #ddd;text-align:center">再CT</th>
-        <th style="padding:5px 6px;border:1px solid #ddd;text-align:center">定期前</th>
-      </tr>`;
+    <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:300px">`;
 
-  rows.forEach(r => {
-    const anyFilled = r.date||r.ct||r.review||r.retest||r.precheck;
-    const bg = anyFilled ? 'background:#e8f5e9;' : '';
-    const bt = r.testRangeStart ? 'border-top:2px solid #e67e22;' : '';
-    const bb = r.testRangeEnd   ? 'border-bottom:2px solid #e67e22;' : '';
-    tableHtml += `<tr style="${bg}${bt}${bb}">
-      <td style="padding:4px 6px;border:1px solid #eee;white-space:nowrap;color:var(--gray-3)">${r.step||'—'}</td>
-      <td style="padding:4px 6px;border:1px solid #eee">${r.title}</td>
-      <td style="padding:4px 6px;border:1px solid #eee;text-align:center;white-space:nowrap;color:var(--text-sub)">${r.page||''}</td>
-      <td style="padding:4px 6px;border:1px solid #eee;text-align:center;${r.date?'background:#bae6fd;':''}">${r.date||''}</td>
-      <td style="padding:4px 6px;border:1px solid #eee;text-align:center;${r.ct?(r.ct==='×'?'background:#fee2e2;':'background:#bae6fd;'):''}"><span style="${r.ct==='×'?'color:#c0392b;font-weight:700;':r.ct?'color:#1d4ed8;':''} ">${r.ct||''}</span></td>
-      <td style="padding:4px 6px;border:1px solid #eee;text-align:center;${r.review?(r.review==='未'?'background:#fee2e2;':'background:#bae6fd;'):''}"><span style="${r.review==='未'?'color:#c0392b;font-weight:700;':r.review?'color:#1d4ed8;':''}">${r.review||''}</span></td>
-      <td style="padding:4px 6px;border:1px solid #eee;text-align:center;${r.retest?(r.retest==='×'?'background:#fee2e2;':'background:#bae6fd;'):''}"><span style="${r.retest==='×'?'color:#c0392b;font-weight:700;':r.retest?'color:#1d4ed8;':''}">${r.retest||''}</span></td>
-      <td style="padding:4px 6px;border:1px solid #eee;text-align:center;${r.precheck?'background:#bae6fd;':''}">${r.precheck||''}</td>
+  if (isKokugo) {
+    tableHtml += `<tr style="background:#f5f5f5">
+      <th style="padding:5px 6px;border:1px solid #ddd;text-align:left">No.</th>
+      <th style="padding:5px 6px;border:1px solid #ddd;text-align:left">問題</th>
+      <th style="padding:5px 6px;border:1px solid #ddd;text-align:center">実施日</th>
+      <th style="padding:5px 6px;border:1px solid #ddd;text-align:center">合否</th>
     </tr>`;
+  } else if (is10min) {
+    tableHtml += `<tr style="background:#f5f5f5">
+      <th style="padding:5px 6px;border:1px solid #ddd;text-align:left">No.</th>
+      <th style="padding:5px 6px;border:1px solid #ddd;text-align:left">科目</th>
+      <th style="padding:5px 6px;border:1px solid #ddd;text-align:center">実施日</th>
+      <th style="padding:5px 6px;border:1px solid #ddd;text-align:center">合否</th>
+      <th style="padding:5px 6px;border:1px solid #ddd;text-align:center">再テスト</th>
+    </tr>`;
+  } else {
+    tableHtml += `<tr style="background:#f5f5f5">
+      <th style="padding:5px 6px;border:1px solid #ddd;text-align:left;white-space:nowrap">STEP</th>
+      <th style="padding:5px 6px;border:1px solid #ddd;text-align:left">タイトル</th>
+      <th style="padding:5px 6px;border:1px solid #ddd;text-align:center;white-space:nowrap">P</th>
+      <th style="padding:5px 6px;border:1px solid #ddd;text-align:center;white-space:nowrap">実施日</th>
+      <th style="padding:5px 6px;border:1px solid #ddd;text-align:center">CT</th>
+      <th style="padding:5px 6px;border:1px solid #ddd;text-align:center">補習</th>
+      <th style="padding:5px 6px;border:1px solid #ddd;text-align:center">再CT</th>
+      <th style="padding:5px 6px;border:1px solid #ddd;text-align:center">定期前</th>
+    </tr>`;
+  }
+
+  const noNums = rows.map(r => parseInt((r.step||'').replace('No.','')));
+  rows.forEach((r, ri) => {
+    const filled2 = r.date||r.ct||r.review||r.retest||r.precheck;
+    const noNum = noNums[ri];
+    const prevNo = ri > 0 ? noNums[ri-1] : -1;
+    const noStripe = !isNaN(noNum) && noNum % 2 === 0 ? 'background:#f4f4f4;' : '';
+    const bg = filled2 ? 'background:#f0faf4;' : noStripe;
+    const bt = r.testRangeStart ? 'border-top:2px solid #e67e22;' : (!isNaN(noNum)&&!isNaN(prevNo)&&noNum!==prevNo&&ri>0?'border-top:2px solid #bbb;':'');
+    const bb = r.testRangeEnd   ? 'border-bottom:2px solid #e67e22;' : '';
+    const ctBg = r.ct==='×'?'background:#fee2e2;':r.ct?'background:#bae6fd;':'';
+    const rvBg = r.review==='未'?'background:#fee2e2;':r.review?'background:#bae6fd;':'';
+    const rtBg = r.retest==='×'?'background:#fee2e2;':r.retest?'background:#bae6fd;':'';
+
+    if (isKokugo) {
+      tableHtml += `<tr style="${bg}${bt}${bb}">
+        <td style="padding:4px 6px;border:1px solid #eee;color:var(--gray-3)">${r.step||'—'}</td>
+        <td style="padding:4px 6px;border:1px solid #eee">${r.title}</td>
+        <td style="padding:4px 6px;border:1px solid #eee;text-align:center;${r.date?'background:#bae6fd;':''}">${r.date||''}</td>
+        <td style="padding:4px 6px;border:1px solid #eee;text-align:center;${ctBg}">${r.ct||''}</td>
+      </tr>`;
+    } else if (is10min) {
+      tableHtml += `<tr style="${bg}${bt}${bb}">
+        <td style="padding:4px 6px;border:1px solid #eee;color:var(--gray-3)">${r.step||'—'}</td>
+        <td style="padding:4px 6px;border:1px solid #eee">${r.title}</td>
+        <td style="padding:4px 6px;border:1px solid #eee;text-align:center;${r.date?'background:#bae6fd;':''}">${r.date||''}</td>
+        <td style="padding:4px 6px;border:1px solid #eee;text-align:center;${ctBg}">${r.ct||''}</td>
+        <td style="padding:4px 6px;border:1px solid #eee;text-align:center;${rtBg}">${r.retest||''}</td>
+      </tr>`;
+    } else {
+      tableHtml += `<tr style="${bg}${bt}${bb}">
+        <td style="padding:4px 6px;border:1px solid #eee;white-space:nowrap;color:var(--gray-3)">${r.step||'—'}</td>
+        <td style="padding:4px 6px;border:1px solid #eee">${r.title}</td>
+        <td style="padding:4px 6px;border:1px solid #eee;text-align:center;white-space:nowrap;color:var(--text-sub)">${r.page||''}</td>
+        <td style="padding:4px 6px;border:1px solid #eee;text-align:center;${r.date?'background:#bae6fd;':''}">${r.date||''}</td>
+        <td style="padding:4px 6px;border:1px solid #eee;text-align:center;${ctBg}">${r.ct||''}</td>
+        <td style="padding:4px 6px;border:1px solid #eee;text-align:center;${rvBg}">${r.review||''}</td>
+        <td style="padding:4px 6px;border:1px solid #eee;text-align:center;${rtBg}">${r.retest||''}</td>
+        <td style="padding:4px 6px;border:1px solid #eee;text-align:center;${r.precheck?'background:#bae6fd;':''}">${r.precheck||''}</td>
+      </tr>`;
+    }
   });
   tableHtml += '</table></div>';
-
   const content = document.getElementById('sp-tab-content');
   if (content) content.innerHTML = tableHtml;
 }
