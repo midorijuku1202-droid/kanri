@@ -198,6 +198,7 @@ const sb = {
   <button class="tab-btn" onclick="switchTab('today')">📅 本日</button>
   <button class="tab-btn" onclick="switchTab('settings')">⚙️ 生徒管理</button>
   <button class="tab-btn" onclick="switchTab('progress')">📊 進捗表</button>
+  <button class="tab-btn" onclick="switchTab('share')">📤 共有</button>
 </div>
 
 <!-- INPUT VIEW -->
@@ -1254,13 +1255,14 @@ function switchTab(tab) {
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('view-'+tab).classList.add('active');
-  const _ti=['input','history','today','settings','progress'].indexOf(tab);
+  const _ti=['input','history','today','settings','progress','share'].indexOf(tab);
   const _tb=document.querySelectorAll('.tab-btn');
   if(_ti>=0&&_tb[_ti])_tb[_ti].classList.add('active');
   if(tab==='history'){ renderHistory(); }
   if(tab==='today'){ renderToday(); }
   if(tab==='settings')renderSettingsList();
   if(tab==='progress')renderProgressList();
+  if(tab==='share')renderShareList();
 }
 
 // ===== TOAST =====
@@ -1722,12 +1724,11 @@ function openRecordEditByIdx(idx) {
 }
 
 function printStudent(encodedName) {
+  // 本日タブからの印刷: 指示表のみ（進行表なし）
   const name = decodeURIComponent(encodedName);
   const records = _records || [];
   const students = getStudents();
-  const ps = getPS();
   const s = students.find(st=>st.name===name);
-  const sid = s?.id;
 
   const now = new Date();
   const oneMonthAgo = new Date(now.getFullYear(), now.getMonth()-1, now.getDate());
@@ -1739,15 +1740,14 @@ function printStudent(encodedName) {
   const todayStr = now.toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit'});
   const oneMonthAgoStr = oneMonthAgo.toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit'});
 
-  // ── 指示表 ──
   const dates = [...new Set(filtered.map(r=>r.date))];
-  let instrRows = '';
+  let rows = '';
   dates.forEach(date=>{
     const drecs = filtered.filter(r=>r.date===date);
     const dDisp = drecs[0].dateDisplay || date;
-    instrRows += `<tr><td colspan="3" style="background:#e8f5ee;font-weight:700;font-size:12px;padding:5px 8px;border:1px solid #ccc;color:#2d6a4f">📅 ${dDisp}</td></tr>`;
+    rows += `<tr><td colspan="3" style="background:#e8f5ee;font-weight:700;font-size:12px;padding:5px 8px;border:1px solid #ccc;color:#2d6a4f">📅 ${dDisp}</td></tr>`;
     drecs.forEach(r=>{
-      instrRows += `<tr>
+      rows += `<tr>
         <td style="border:1px solid #ccc;padding:6px 8px;text-align:center;font-size:12px;white-space:nowrap;vertical-align:top">${r.subject||''}</td>
         <td style="border:1px solid #ccc;padding:6px 8px;font-size:12px;vertical-align:top">${(r.hasTest||r.has_test)?'【テスト】'+(r.testContent||r.test_content||'')+'　→　':''}${r.instruction||''}${r.memo?'　📝'+r.memo:''}</td>
         <td style="border:1px solid #ccc;padding:6px 8px;font-size:12px;color:#7c1d6f;vertical-align:top">${r.homework||''}</td>
@@ -1755,73 +1755,23 @@ function printStudent(encodedName) {
     });
   });
 
-  // ── 進行表 ──
-  const tbs = sid ? ((ps[sid]||{}).textbooks||[]) : [];
-  let progHtml = '';
-  tbs.forEach(tb => {
-    const rows = ((ps[sid]||{}).data||{})[tb.key]||[];
-    if (!rows.length) return;
-    progHtml += `<div style="margin-bottom:14px">
-      <div style="font-size:12px;font-weight:700;color:#2d6a4f;background:#e8f5ee;padding:5px 10px;border-radius:6px;margin-bottom:5px">${tb.name}（${tb.grade}）</div>
-      <table style="width:100%;border-collapse:collapse;font-size:10px">
-        <tr style="background:#f5f5f5">
-          <th style="border:1px solid #ccc;padding:4px 5px;width:12%">STEP</th>
-          <th style="border:1px solid #ccc;padding:4px 5px">タイトル</th>
-          <th style="border:1px solid #ccc;padding:4px 5px;width:8%;text-align:center">P</th>
-          <th style="border:1px solid #ccc;padding:4px 5px;width:9%;text-align:center">実施日</th>
-          <th style="border:1px solid #ccc;padding:4px 5px;width:7%;text-align:center">CT</th>
-          <th style="border:1px solid #ccc;padding:4px 5px;width:8%;text-align:center">補習</th>
-          <th style="border:1px solid #ccc;padding:4px 5px;width:7%;text-align:center">再CT</th>
-          <th style="border:1px solid #ccc;padding:4px 5px;width:9%;text-align:center">定期前</th>
-        </tr>`;
-    rows.forEach(r=>{
-      const anyFilled = r.date||r.ct||r.review||r.retest||r.precheck;
-      const bg = anyFilled ? 'background:#f0faf4;' : '';
-      const bt = r.testRangeStart ? 'border-top:2px solid #e67e22;' : '';
-      const bb = r.testRangeEnd   ? 'border-bottom:2px solid #e67e22;' : '';
-      const ctBg  = r.ct==='×'     ? 'background:#fee2e2;color:#c0392b;font-weight:700;' : r.ct ? 'background:#bae6fd;' : '';
-      const rvBg  = r.review==='未' ? 'background:#fee2e2;color:#c0392b;font-weight:700;' : r.review ? 'background:#bae6fd;' : '';
-      const rtBg  = r.retest==='×'  ? 'background:#fee2e2;color:#c0392b;font-weight:700;' : r.retest ? 'background:#bae6fd;' : '';
-      progHtml += `<tr style="${bg}${bt}${bb}">
-        <td style="border:1px solid #eee;padding:3px 5px;color:#888">${r.step||'—'}</td>
-        <td style="border:1px solid #eee;padding:3px 5px">${r.title||''}</td>
-        <td style="border:1px solid #eee;padding:3px 5px;text-align:center;color:#666">${r.page||''}</td>
-        <td style="border:1px solid #eee;padding:3px 5px;text-align:center;${r.date?'background:#bae6fd;':''}">${r.date||''}</td>
-        <td style="border:1px solid #eee;padding:3px 5px;text-align:center;${ctBg}">${r.ct||''}</td>
-        <td style="border:1px solid #eee;padding:3px 5px;text-align:center;${rvBg}">${r.review||''}</td>
-        <td style="border:1px solid #eee;padding:3px 5px;text-align:center;${rtBg}">${r.retest||''}</td>
-        <td style="border:1px solid #eee;padding:3px 5px;text-align:center;${r.precheck?'background:#bae6fd;':''}">${r.precheck||''}</td>
-      </tr>`;
-    });
-    progHtml += '</table></div>';
-  });
-
   const previewContent = document.getElementById('pdf-preview-content');
   previewContent.innerHTML = `
     <div style="font-family:'Hiragino Sans','Meiryo',sans-serif;padding:16px">
-      <h2 style="text-align:center;font-size:17px;margin-bottom:3px">学習レポート</h2>
+      <h2 style="text-align:center;font-size:17px;margin-bottom:3px">学習指示表</h2>
       <div style="text-align:center;font-size:13px;margin-bottom:2px;font-weight:700">${name}（${s?.grade||''} ${s?.school||''}）</div>
-      <div style="text-align:center;font-size:11px;color:#666;margin-bottom:16px">${todayStr} 発行</div>
-
-      <div style="font-size:13px;font-weight:700;background:#e8f5ee;padding:6px 10px;border-radius:6px;margin-bottom:8px">
-        📝 学習指示表（${oneMonthAgoStr}〜${todayStr}）
-      </div>
-      ${filtered.length ? `<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:20px">
+      <div style="text-align:center;font-size:11px;color:#666;margin-bottom:12px">${oneMonthAgoStr} 〜 ${todayStr}</div>
+      ${filtered.length ? `<table style="width:100%;border-collapse:collapse;font-size:12px">
         <thead><tr>
           <th style="background:#2d6a4f;color:white;padding:6px;text-align:center;border:1px solid #ccc;width:9%">科目</th>
           <th style="background:#2d6a4f;color:white;padding:6px;text-align:center;border:1px solid #ccc;width:57%">実施内容指示</th>
           <th style="background:#2d6a4f;color:white;padding:6px;text-align:center;border:1px solid #ccc;width:34%">宿題</th>
         </tr></thead>
-        <tbody>${instrRows}</tbody>
-      </table>` : '<div style="font-size:12px;color:#888;padding:8px;margin-bottom:16px">この期間の記録がありません</div>'}
-
-      ${progHtml ? `<div style="font-size:13px;font-weight:700;background:#e8f5ee;padding:6px 10px;border-radius:6px;margin-bottom:10px">
-        📊 進行表（全期間）
-      </div>${progHtml}` : ''}
+        <tbody>${rows}</tbody>
+      </table>` : '<div style="text-align:center;color:#888;padding:20px">過去1ヶ月の記録がありません</div>'}
     </div>`;
 
-  const modal = document.getElementById('pdf-preview-modal');
-  modal.style.display = 'flex';
+  document.getElementById('pdf-preview-modal').style.display = 'flex';
 }
 
 
@@ -1979,6 +1929,139 @@ function resetInstrForm() {
   testEnabled2 = false;
   document.getElementById('instr-date').value = '';
 }
+
+// ===== 共有タブ =====
+let shareGrade = 'all';
+
+function filterShareGrade(grade, btn) {
+  shareGrade = grade;
+  document.querySelectorAll('#share-grade-btns .grade-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderShareList();
+}
+
+function renderShareList(q='') {
+  const students = getStudents();
+  let list = students;
+  if (shareGrade !== 'all') list = list.filter(s=>s.grade===shareGrade);
+  if (q) list = list.filter(s=>s.name.includes(q)||s.yomi.includes(q));
+  const el = document.getElementById('share-student-list');
+  if (!el) return;
+  el.innerHTML = list.map(s => `
+    <div style="background:white;border-radius:var(--radius);padding:12px 16px;margin-bottom:8px;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <span style="font-weight:700;font-size:15px">${s.name}</span>
+        <span style="font-size:11px;color:var(--gray-3);margin-left:8px">${s.grade} ${s.school||''}</span>
+      </div>
+      <button onclick="shareStudent('${encodeURIComponent(s.name)}')"
+        style="background:var(--green);color:white;border:none;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer">
+        📤 送る
+      </button>
+    </div>`).join('') || '<div class="empty-state"><div class="icon">🔍</div>該当なし</div>';
+}
+
+function shareStudent(encodedName) {
+  const name = decodeURIComponent(encodedName);
+  const records = _records || [];
+  const students = getStudents();
+  const ps = getPS();
+  const s = students.find(st=>st.name===name);
+  const sid = s?.id;
+
+  const now = new Date();
+  const oneMonthAgo = new Date(now.getFullYear(), now.getMonth()-1, now.getDate());
+  const filtered = records.filter(r=>{
+    const d = new Date((r.date||'') + 'T00:00:00');
+    return (r.studentName===name) && d >= oneMonthAgo && d <= now;
+  }).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+
+  const todayStr = now.toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit'});
+  const oneMonthAgoStr = oneMonthAgo.toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit'});
+
+  // ── 指示表 ──
+  const dates = [...new Set(filtered.map(r=>r.date))];
+  let instrRows = '';
+  dates.forEach(date=>{
+    const drecs = filtered.filter(r=>r.date===date);
+    const dDisp = drecs[0].dateDisplay || date;
+    instrRows += `<tr><td colspan="3" style="background:#e8f5ee;font-weight:700;font-size:11px;padding:4px 8px;border:1px solid #ccc;color:#2d6a4f">📅 ${dDisp}</td></tr>`;
+    drecs.forEach(r=>{
+      instrRows += `<tr>
+        <td style="border:1px solid #ccc;padding:5px 7px;text-align:center;font-size:11px;white-space:nowrap;vertical-align:top">${r.subject||''}</td>
+        <td style="border:1px solid #ccc;padding:5px 7px;font-size:11px;vertical-align:top">${(r.hasTest||r.has_test)?'【テスト】'+(r.testContent||r.test_content||'')+'　→　':''}${r.instruction||''}${r.memo?'　📝'+r.memo:''}</td>
+        <td style="border:1px solid #ccc;padding:5px 7px;font-size:11px;color:#7c1d6f;vertical-align:top">${r.homework||''}</td>
+      </tr>`;
+    });
+  });
+
+  // ── 進行表 ──
+  const tbs = sid ? ((ps[sid]||{}).textbooks||[]) : [];
+  let progHtml = '';
+  tbs.forEach(tb => {
+    const rows = ((ps[sid]||{}).data||{})[tb.key]||[];
+    if (!rows.length) return;
+    progHtml += `<div style="margin-bottom:14px">
+      <div style="font-size:12px;font-weight:700;color:#2d6a4f;background:#e8f5ee;padding:5px 10px;border-radius:6px;margin-bottom:5px">${tb.name}（${tb.grade}）</div>
+      <table style="width:100%;border-collapse:collapse;font-size:10px">
+        <tr style="background:#f5f5f5">
+          <th style="border:1px solid #ccc;padding:4px 5px;width:12%">STEP</th>
+          <th style="border:1px solid #ccc;padding:4px 5px">タイトル</th>
+          <th style="border:1px solid #ccc;padding:4px 5px;width:8%;text-align:center">P</th>
+          <th style="border:1px solid #ccc;padding:4px 5px;width:9%;text-align:center">実施日</th>
+          <th style="border:1px solid #ccc;padding:4px 5px;width:7%;text-align:center">CT</th>
+          <th style="border:1px solid #ccc;padding:4px 5px;width:8%;text-align:center">補習</th>
+          <th style="border:1px solid #ccc;padding:4px 5px;width:7%;text-align:center">再CT</th>
+          <th style="border:1px solid #ccc;padding:4px 5px;width:9%;text-align:center">定期前</th>
+        </tr>`;
+    rows.forEach(r=>{
+      const filled = r.date||r.ct||r.review||r.retest||r.precheck;
+      const bg = filled ? 'background:#f0faf4;' : '';
+      const bt = r.testRangeStart ? 'border-top:2px solid #e67e22;' : '';
+      const bb = r.testRangeEnd   ? 'border-bottom:2px solid #e67e22;' : '';
+      const ctStyle  = r.ct==='×'     ? 'background:#fee2e2;color:#c0392b;font-weight:700;' : r.ct?'background:#bae6fd;':'';
+      const rvStyle  = r.review==='未' ? 'background:#fee2e2;color:#c0392b;font-weight:700;' : r.review?'background:#bae6fd;':'';
+      const rtStyle  = r.retest==='×'  ? 'background:#fee2e2;color:#c0392b;font-weight:700;' : r.retest?'background:#bae6fd;':'';
+      progHtml += `<tr style="${bg}${bt}${bb}">
+        <td style="border:1px solid #eee;padding:3px 4px;color:#888">${r.step||'—'}</td>
+        <td style="border:1px solid #eee;padding:3px 4px">${r.title||''}</td>
+        <td style="border:1px solid #eee;padding:3px 4px;text-align:center;color:#666">${r.page||''}</td>
+        <td style="border:1px solid #eee;padding:3px 4px;text-align:center;${r.date?'background:#bae6fd;':''}">${r.date||''}</td>
+        <td style="border:1px solid #eee;padding:3px 4px;text-align:center;${ctStyle}">${r.ct||''}</td>
+        <td style="border:1px solid #eee;padding:3px 4px;text-align:center;${rvStyle}">${r.review||''}</td>
+        <td style="border:1px solid #eee;padding:3px 4px;text-align:center;${rtStyle}">${r.retest||''}</td>
+        <td style="border:1px solid #eee;padding:3px 4px;text-align:center;${r.precheck?'background:#bae6fd;':''}">${r.precheck||''}</td>
+      </tr>`;
+    });
+    progHtml += '</table></div>';
+  });
+
+  // プレビュー表示
+  const previewContent = document.getElementById('pdf-preview-content');
+  previewContent.innerHTML = `
+    <div style="font-family:'Hiragino Sans','Meiryo',sans-serif;padding:16px">
+      <h2 style="text-align:center;font-size:17px;margin-bottom:3px">学習レポート</h2>
+      <div style="text-align:center;font-size:13px;margin-bottom:2px;font-weight:700">${name}（${s?.grade||''} ${s?.school||''}）</div>
+      <div style="text-align:center;font-size:11px;color:#666;margin-bottom:16px">${todayStr} 発行</div>
+
+      <div style="font-size:13px;font-weight:700;background:#e8f5ee;padding:6px 10px;border-radius:6px;margin-bottom:8px">
+        📝 学習指示表（${oneMonthAgoStr}〜${todayStr}）
+      </div>
+      ${filtered.length ? `<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:20px">
+        <thead><tr>
+          <th style="background:#2d6a4f;color:white;padding:5px;text-align:center;border:1px solid #ccc;width:9%">科目</th>
+          <th style="background:#2d6a4f;color:white;padding:5px;text-align:center;border:1px solid #ccc;width:57%">実施内容指示</th>
+          <th style="background:#2d6a4f;color:white;padding:5px;text-align:center;border:1px solid #ccc;width:34%">宿題</th>
+        </tr></thead>
+        <tbody>${instrRows}</tbody>
+      </table>` : '<div style="font-size:12px;color:#888;padding:8px;margin-bottom:16px">この期間の記録がありません</div>'}
+
+      ${progHtml ? `<div style="font-size:13px;font-weight:700;background:#e8f5ee;padding:6px 10px;border-radius:6px;margin-bottom:10px">
+        📊 進行表（全期間）
+      </div>${progHtml}` : ''}
+    </div>`;
+
+  document.getElementById('pdf-preview-modal').style.display = 'flex';
+}
 // INIT
 async function initApp() {
   showLoadingOverlay('データを読み込み中...');
@@ -2022,6 +2105,22 @@ window.addEventListener("DOMContentLoaded", initApp);
   </div>
   <input type="text" class="search-box" placeholder="🔍 生徒名で検索..." oninput="renderProgressList(this.value)" id="prog-search">
   <div id="progress-list"></div>
+</div>
+
+
+<!-- SHARE VIEW -->
+<div id="view-share" class="view">
+  <div style="background:var(--green-pale);border-radius:var(--radius);padding:12px 16px;margin-bottom:14px;font-size:13px;color:var(--green)">
+    📱 生徒を選んでプレビュー → 共有ボタン（↑）→ LINE で送れます
+  </div>
+  <div class="grade-select" id="share-grade-btns">
+    <button class="grade-btn active" onclick="filterShareGrade('all',this)">全員</button>
+    <button class="grade-btn" onclick="filterShareGrade('中1',this)">中1</button>
+    <button class="grade-btn" onclick="filterShareGrade('中2',this)">中2</button>
+    <button class="grade-btn" onclick="filterShareGrade('中3',this)">中3</button>
+  </div>
+  <input type="text" class="search-box" placeholder="🔍 生徒名で検索..." oninput="renderShareList(this.value)" id="share-search">
+  <div id="share-student-list"></div>
 </div>
 
 <!-- MODAL: 教材追加 -->
