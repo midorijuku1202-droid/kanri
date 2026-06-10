@@ -164,15 +164,6 @@ const sb = {
 
   /* PRINT STYLES */
   #print-area { display:none; }
-  @media print {
-    body > * { display:none !important; }
-    #pdf-preview-modal { display:flex !important; position:fixed !important; inset:0 !important; background:white !important; flex-direction:column !important; z-index:9999 !important; }
-    #pdf-preview-modal > div:first-child,
-    #pdf-preview-modal > div:nth-child(2),
-    #pdf-preview-modal > div:last-child { display:none !important; }
-    #pdf-preview-content { display:block !important; overflow:visible !important; max-height:none !important; flex:1; background:white !important; }
-    body { background:white !important; }
-  }
   @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
@@ -2102,6 +2093,30 @@ function shareStudent(encodedName) {
 
   document.getElementById('pdf-preview-modal').style.display = 'flex';
 }
+
+function openPrintTab() {
+  const content = document.getElementById('pdf-preview-content');
+  if (!content) return;
+  const printHtml = `<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>学習レポート</title>
+<style>
+  body { font-family: 'Hiragino Sans','Meiryo',sans-serif; margin:0; padding:0; background:white; }
+  @media print { body { margin:0; } }
+</style>
+</head>
+<body>
+${content.innerHTML}
+<script>window.onload=function(){window.print();}<\/script>
+</body>
+</html>`;
+  const blob = new Blob([printHtml], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+}
 // INIT
 async function initApp() {
   showLoadingOverlay('データを読み込み中...');
@@ -2588,10 +2603,9 @@ async function savePim() {
     <span style="color:white;font-size:14px;font-weight:700;flex:1">📄 PDF / LINE送信プレビュー</span>
     <button onclick="closePdfPreview()" style="background:rgba(255,255,255,.2);border:none;color:white;padding:6px 14px;border-radius:8px;font-size:13px;cursor:pointer">✕ 閉じる</button>
   </div>
-  <div style="background:#f0f0f0;padding:9px 16px;flex-shrink:0;border-bottom:1px solid #ddd;font-size:12px;color:#444;line-height:1.8">
-    📄 <strong>PDFで送る手順：</strong><br>
-    ① Safari下部の <strong>共有ボタン（↑）</strong> → <strong>「PDFを作成」</strong><br>
-    ② 作成されたPDFを <strong>LINE</strong> で送信
+  <div style="background:#f0f0f0;padding:9px 16px;flex-shrink:0;border-bottom:1px solid #ddd;font-size:12px;color:#444;line-height:1.6;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <div style="flex:1">📄 印刷・PDF送信は右のボタンから別タブで開いてください</div>
+    <button onclick="openPrintTab()" style="background:#2d6a4f;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">🖨️ 印刷用に開く</button>
   </div>
   <div id="pdf-preview-content" style="flex:1;overflow-y:auto;background:white;-webkit-overflow-scrolling:touch;padding:16px"></div>
 </div>
