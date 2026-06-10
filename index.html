@@ -249,11 +249,13 @@ const sb = {
         <div class="instr-label">実施</div>
         <div style="flex:1">
           <div class="quick-patterns">
-            <button class="pattern-btn" onclick="appendPattern('テキスト進める')">テキスト進める</button>
-            <button class="pattern-btn" onclick="appendPattern('ワーク進める')">ワーク進める</button>
-            <button class="pattern-btn" onclick="appendPattern('問題集進める')">問題集進める</button>
-            <button class="pattern-btn" onclick="appendPattern('復習する')">復習する</button>
-            <button class="pattern-btn" onclick="appendPattern('まとめノート')">まとめノート</button>
+            <button class="pattern-btn" onclick="appendPattern('フォレスタ')">フォレスタ</button>
+            <button class="pattern-btn" onclick="appendPattern('iワーク＋')">iワーク＋</button>
+            <button class="pattern-btn" onclick="appendPattern('iワーク')">iワーク</button>
+            <button class="pattern-btn" onclick="appendPattern('Sirius')">Sirius</button>
+            <button class="pattern-btn" onclick="appendPattern('学校ワーク')">学校ワーク</button>
+            <button class="pattern-btn" onclick="appendPattern('フォレスタ英単語')">フォレスタ英単語</button>
+            <button class="pattern-btn" onclick="appendPattern('フォレスタステップ')">フォレスタステップ</button>
           </div>
           <textarea id="instr-text" placeholder="実施内容を入力（例：英必修 P98〜進める）" rows="3"></textarea>
         </div>
@@ -262,10 +264,13 @@ const sb = {
         <div class="instr-label">宿題</div>
         <div style="flex:1">
           <div class="quick-patterns">
-            <button class="pattern-btn" onclick="appendHomework('テキスト復習')">テキスト復習</button>
-            <button class="pattern-btn" onclick="appendHomework('ワーク')">ワーク</button>
-            <button class="pattern-btn" onclick="appendHomework('単語暗記')">単語暗記</button>
-            <button class="pattern-btn" onclick="appendHomework('プリント')">プリント</button>
+            <button class="pattern-btn" onclick="appendHomework('フォレスタ')">フォレスタ</button>
+            <button class="pattern-btn" onclick="appendHomework('iワーク＋')">iワーク＋</button>
+            <button class="pattern-btn" onclick="appendHomework('iワーク')">iワーク</button>
+            <button class="pattern-btn" onclick="appendHomework('Sirius')">Sirius</button>
+            <button class="pattern-btn" onclick="appendHomework('学校ワーク')">学校ワーク</button>
+            <button class="pattern-btn" onclick="appendHomework('フォレスタ英単語')">フォレスタ英単語</button>
+            <button class="pattern-btn" onclick="appendHomework('フォレスタステップ')">フォレスタステップ</button>
           </div>
           <textarea id="homework-text" placeholder="宿題内容を入力（任意）" rows="2"></textarea>
         </div>
@@ -405,6 +410,10 @@ const sb = {
   <div class="modal">
     <div class="modal-title">記録を編集</div>
     <div class="modal-row">
+      <div class="modal-label">日付</div>
+      <input type="date" id="rm-date" style="width:100%;padding:10px 12px;border-radius:8px;border:2px solid var(--gray-2);font-size:14px;outline:none">
+    </div>
+    <div class="modal-row">
       <div class="modal-label">科目</div>
       <select id="rm-subject">
         <option>英語</option><option>数学</option><option>理科</option>
@@ -440,115 +449,116 @@ const sb = {
 // ===== BASE STUDENT DATA =====
 const BASE_STUDENTS = [
   {name:"大山幸祐",yomi:"こうすけ",grade:"中1",school:"鳴子台"},
-  {name:"宮永悠",yomi:"ゆい",grade:"中1",school:"鳴子台"},
-  {name:"野々山花凜",yomi:"かりん",grade:"中1",school:"鳴子台"},
-  {name:"松田柳奈",yomi:"なぎ",grade:"中1",school:"鳴子台"},
+  {name:"牧美優希",yomi:"みゆき",grade:"中2",school:"鳴子台"},
+  {name:"川岸遼太郎",yomi:"りょうたろう",grade:"中3",school:"鳴子台"},
+  {name:"宮永悠衣",yomi:"ゆい",grade:"中1",school:"鳴子台"},
+  {name:"山川朱音",yomi:"あかね",grade:"中2",school:"鳴子台"},
+  {name:"松田孟琉",yomi:"たける",grade:"中3",school:"鳴子台"},
+  {name:"野々山花凛",yomi:"かりん",grade:"中1",school:"鳴子台"},
+  {name:"葛西杏樹",yomi:"あんじゅ",grade:"中2",school:"鳴子台"},
+  {name:"佐竹由衣",yomi:"ゆい",grade:"中3",school:"鳴子台"},
+  {name:"松田梛義",yomi:"なぎ",grade:"中1",school:"鳴子台"},
+  {name:"嵜山遥香",yomi:"はるか",grade:"中2",school:"鳴子台"},
+  {name:"中谷奏仁",yomi:"かなと",grade:"中3",school:"鳴子台"},
   {name:"前野恭佑",yomi:"きょうすけ",grade:"中1",school:"鳴子台"},
-  {name:"大橋颯",yomi:"そう",grade:"中1",school:"鳴子台"},
-  {name:"平子祐翔",yomi:"ひろと",grade:"中1",school:"鳴子台"},
-  {name:"岩野心咲",yomi:"みさき",grade:"中1",school:"鳴子台"},
-  {name:"藤代瑛心",yomi:"えいしん",grade:"中1",school:"鳴子台"},
-  {name:"河村記念",yomi:"きいち",grade:"中1",school:"鳴子台"},
-  {name:"森下希々花",yomi:"ののか",grade:"中1",school:"鳴子台"},
-  {name:"水上敦仁",yomi:"あつひと",grade:"中1",school:"鳴子台"},
-  {name:"内ヶ島瑠莉",yomi:"るり",grade:"中1",school:"鳴子台"},
-  {name:"奥山新大",yomi:"あらた",grade:"中1",school:"鳴子台"},
-  {name:"菊田莉緒",yomi:"りお",grade:"中1",school:"鳴子台"},
-  {name:"辻茅都",yomi:"めいな",grade:"中1",school:"鳴子台"},
-  {name:"島田侑奈",yomi:"ゆうな",grade:"中1",school:"鳴子台"},
-  {name:"高木靖良",yomi:"せら",grade:"中1",school:"鳴子台"},
-  {name:"久世紗也夏",yomi:"さやか",grade:"中1",school:"天白星"},
-  {name:"古川幹",yomi:"もとき",grade:"中1",school:"天白星"},
-  {name:"倉本彩仁",yomi:"あやと",grade:"中1",school:"天白星"},
-  {name:"中原総士",yomi:"そうし",grade:"中1",school:"天白星"},
-  {name:"佐藤仁之介",yomi:"じんのすけ",grade:"中1",school:"天白星"},
-  {name:"堀川柴",yomi:"しおり",grade:"中1",school:"天白星"},
-  {name:"西山佐那",yomi:"さな",grade:"中1",school:"扇台"},
-  {name:"今枝虹音",yomi:"にじほ",grade:"中1",school:"扇台"},
-  {name:"成田綾花",yomi:"あやか",grade:"中1",school:"扇台"},
-  {name:"川岸遼太郎",yomi:"りょうたろう",grade:"中1",school:"神沢"},
-  {name:"川間遥斗",yomi:"はると",grade:"中1",school:"神沢"},
-  {name:"小林新",yomi:"あらた",grade:"中1",school:"神沢"},
-  {name:"観稲紡",yomi:"つむぎ",grade:"中1",school:"神沢"},
-  {name:"原侃若生",yomi:"ゆうせい",grade:"中1",school:"濱ノ木"},
-  {name:"岩岩育幹",yomi:"あんり",grade:"中1",school:"泉"},
-  {name:"戸田葵",yomi:"あおい",grade:"中1",school:"恒山"},
-  {name:"牧美優希",yomi:"みゆき",grade:"中2",school:""},
-  {name:"山山朱音",yomi:"あかね",grade:"中2",school:""},
-  {name:"葛西杏樹",yomi:"あんじゅ",grade:"中2",school:""},
-  {name:"寄山香音",yomi:"はるか",grade:"中2",school:"鳴子台"},
   {name:"寺田菜那",yomi:"なな",grade:"中2",school:"鳴子台"},
+  {name:"橋本好平",yomi:"こうへい",grade:"中3",school:"鳴子台"},
+  {name:"大橋颯",yomi:"そう",grade:"中1",school:"鳴子台"},
   {name:"油谷美月",yomi:"みづき",grade:"中2",school:"鳴子台"},
-  {name:"加藤瑠偉",yomi:"るい",grade:"中2",school:"鳴子台"},
+  {name:"木村彩乃",yomi:"あやの",grade:"中3",school:"鳴子台"},
+  {name:"平子裕翔",yomi:"ひろと",grade:"中1",school:"鳴子台"},
+  {name:"大村那月",yomi:"なつき",grade:"中2",school:"鳴子台"},
+  {name:"富田望叶",yomi:"もか",grade:"中3",school:"鳴子台"},
+  {name:"岩野心咲",yomi:"みさき",grade:"中1",school:"鳴子台"},
+  {name:"加藤瑠莞",yomi:"るい",grade:"中2",school:"鳴子台"},
+  {name:"内田蒼大",yomi:"そうた",grade:"中3",school:"鳴子台"},
+  {name:"藤代瑛心",yomi:"えいしん",grade:"中1",school:"鳴子台"},
   {name:"土屋祐仁",yomi:"ゆひと",grade:"中2",school:"鳴子台"},
-  {name:"島川悠",yomi:"はるか",grade:"中2",school:"鳴子台"},
-  {name:"鈴木杏",yomi:"あん",grade:"中2",school:"神沢"},
-  {name:"高橋樹輝",yomi:"いっき",grade:"中2",school:"神沢"},
-  {name:"岩本龍征",yomi:"りゅうせい",grade:"中2",school:"神沢"},
-  {name:"福本希美",yomi:"のぞみ",grade:"中2",school:"千島丘"},
-  {name:"大野侃杏",yomi:"ともき",grade:"中2",school:"千島丘"},
-  {name:"木山瑛琉",yomi:"ふうり",grade:"中2",school:"千島丘"},
-  {name:"渡邊侃楽",yomi:"ゆら",grade:"中2",school:"濱ノ水"},
-  {name:"丹波そよか",yomi:"そよか",grade:"中2",school:"濱ノ水"},
-  {name:"藤平愛梨",yomi:"あいり",grade:"中2",school:"扇台"},
-  {name:"瑞来くるみ",yomi:"くるみ",grade:"中2",school:"扇台"},
-  {name:"皆川莉莉",yomi:"りり",grade:"中2",school:"扇台"},
-  {name:"阪野侃",yomi:"りょう",grade:"中2",school:"天白星"},
-  {name:"酒井蒼佑",yomi:"ゆうすけ",grade:"中2",school:"天白星"},
-  {name:"木村海",yomi:"うみ",grade:"中2",school:"左京山"},
-  {name:"伊藤薬穂",yomi:"かほ",grade:"中2",school:"久方"},
-  {name:"石田まち",yomi:"まち",grade:"中2",school:"鳴海"},
-  {name:"山口大雅",yomi:"だいき",grade:"中2",school:"本城"},
-  {name:"鈴間侃麻",yomi:"まお",grade:"中2",school:"大高"},
-  {name:"杉尾侃太郎",yomi:"りんたろう",grade:"中2",school:"豊明"},
-  {name:"個友愛",yomi:"ゆうな",grade:"中2",school:"天白南"},
-  {name:"杉江美実",yomi:"みみ",grade:"中2",school:"桜山"},
-  {name:"川岸遼太郎",yomi:"りょうたろう",grade:"中3",school:""},
-  {name:"松田孟琉",yomi:"たける",grade:"中3",school:""},
-  {name:"佐竹由衣",yomi:"ゆい",grade:"中3",school:""},
-  {name:"中谷奏仁",yomi:"かなと",grade:"中3",school:""},
-  {name:"橋本幸平",yomi:"こうへい",grade:"中3",school:""},
-  {name:"木村彩乃",yomi:"あやの",grade:"中3",school:""},
-  {name:"富田望叶",yomi:"もか",grade:"中3",school:""},
-  {name:"内田蒼大",yomi:"そうた",grade:"中3",school:""},
-  {name:"小島拓誠",yomi:"ゆうせい",grade:"中3",school:"鳴子台"},
+  {name:"小島祐誠",yomi:"ゆうせい",grade:"中3",school:"鳴子台"},
+  {name:"河村紀壱",yomi:"きいち",grade:"中1",school:"鳴子台"},
+  {name:"島川悠",yomi:"はるか",grade:"中2",school:"神沢"},
   {name:"足助珠里",yomi:"じゅり",grade:"中3",school:"鳴子台"},
+  {name:"森下希々花",yomi:"ののか",grade:"中1",school:"鳴子台"},
+  {name:"鈴木杏",yomi:"あん",grade:"中2",school:"神沢"},
   {name:"前野朱音",yomi:"あやね",grade:"中3",school:"鳴子台"},
+  {name:"水上敦仁",yomi:"あつひと",grade:"中1",school:"鳴子台"},
+  {name:"高橋樹輝",yomi:"いっき",grade:"中2",school:"神沢"},
   {name:"齋藤蒼太",yomi:"そうた",grade:"中3",school:"鳴子台"},
+  {name:"内ヶ島瑠莉",yomi:"るり",grade:"中1",school:"鳴子台"},
+  {name:"岩本龍征",yomi:"りゅうせい",grade:"中2",school:"神沢"},
   {name:"原優衣",yomi:"ゆい",grade:"中3",school:"鳴子台"},
+  {name:"奥山新大",yomi:"あらた",grade:"中1",school:"鳴子台"},
+  {name:"福本希美",yomi:"のぞみ",grade:"中2",school:"千鳥丘"},
   {name:"内ヶ島悠大",yomi:"ゆうだい",grade:"中3",school:"鳴子台"},
-  {name:"工藤天助",yomi:"じょうすけ",grade:"中3",school:"鳴子台"},
-  {name:"新美咲く",yomi:"さく",grade:"中3",school:"鳴子台"},
-  {name:"楠上徳真",yomi:"とくま",grade:"中3",school:"鳴子台"},
-  {name:"谷梨奈奈",yomi:"りな",grade:"中3",school:"鳴子台"},
-  {name:"井上謙伴",yomi:"ともはん",grade:"中3",school:"鳴子台"},
-  {name:"筒井奈",yomi:"かなで",grade:"中3",school:"鳴子台"},
-  {name:"安島大人",yomi:"ゆうと",grade:"中3",school:"鳴子台"},
-  {name:"松田正輝",yomi:"まさき",grade:"中3",school:"鳴子台"},
-  {name:"神戸竜太郎",yomi:"りょうたろう",grade:"中3",school:"鳴子台"},
-  {name:"平野紗希",yomi:"さき",grade:"中3",school:"鳴子台"},
+  {name:"菊田莉緒",yomi:"りお",grade:"中1",school:"鳴子台"},
+  {name:"大野知希",yomi:"ともき",grade:"中2",school:"千鳥丘"},
+  {name:"工藤丈助",yomi:"じょうすけ",grade:"中3",school:"鳴子台"},
+  {name:"辻芽那",yomi:"めいな",grade:"中1",school:"鳴子台"},
+  {name:"木川楓琉",yomi:"ふうり",grade:"中2",school:"千鳥丘"},
+  {name:"新美瑳久",yomi:"さく",grade:"中3",school:"鳴子台"},
+  {name:"島田侑奈",yomi:"ゆうな",grade:"中1",school:"鳴子台"},
+  {name:"渡邊侑來",yomi:"ゆら",grade:"中2",school:"滝ノ水"},
+  {name:"檀上徳真",yomi:"とくま",grade:"中3",school:"鳴子台"},
+  {name:"高木晴良",yomi:"せら",grade:"中1",school:"鳴子台"},
+  {name:"丹波そよか",yomi:"そよか",grade:"中2",school:"滝ノ水"},
+  {name:"谷梨央奈",yomi:"りおな",grade:"中3",school:"鳴子台"},
+  {name:"久世紗也夏",yomi:"さやか",grade:"中1",school:"天白南"},
+  {name:"藤平愛梨",yomi:"あいり",grade:"中2",school:"滝ノ水"},
+  {name:"井上露伴",yomi:"ろはん",grade:"中3",school:"神沢"},
+  {name:"古川幹",yomi:"もとき",grade:"中1",school:"天白南"},
+  {name:"端来未",yomi:"くるみ",grade:"中2",school:"扇台"},
+  {name:"筒井奏",yomi:"かなで",grade:"中3",school:"神沢"},
+  {name:"倉本絢仁",yomi:"あやと",grade:"中1",school:"天白南"},
+  {name:"皆川璃莉",yomi:"りり",grade:"中2",school:"扇台"},
+  {name:"安島優人",yomi:"ゆうと",grade:"中3",school:"神沢"},
+  {name:"中原総士",yomi:"そうし",grade:"中1",school:"天白南"},
+  {name:"阪野僚",yomi:"りょう",grade:"中2",school:"天白"},
+  {name:"松田正輝",yomi:"まさき",grade:"中3",school:"神沢"},
+  {name:"佐藤仁之介",yomi:"じんのすけ",grade:"中1",school:"天白南"},
+  {name:"酒井蒼佑",yomi:"そうすけ",grade:"中2",school:"天白"},
+  {name:"神戸竜太朗",yomi:"りゅうたろう",grade:"中3",school:"神沢"},
+  {name:"堀川栞",yomi:"しおり",grade:"中1",school:"天白南"},
+  {name:"木村羽美",yomi:"うみ",grade:"中2",school:"左京山"},
+  {name:"平野紗希",yomi:"さき",grade:"中3",school:"神沢"},
+  {name:"西山咲南",yomi:"さな",grade:"中1",school:"扇台"},
+  {name:"伊藤果穂",yomi:"かほ",grade:"中2",school:"久方"},
   {name:"金澤藍",yomi:"あい",grade:"中3",school:"神沢"},
+  {name:"今井虹歩",yomi:"にじほ",grade:"中1",school:"扇台"},
+  {name:"石田まち",yomi:"まち",grade:"中2",school:"鳴海"},
   {name:"鈴木ひまり",yomi:"ひまり",grade:"中3",school:"神沢"},
+  {name:"成田綾花",yomi:"あやか",grade:"中1",school:"神沢"},
+  {name:"山口大碧",yomi:"だいき",grade:"中2",school:"本城"},
   {name:"石口琉聖",yomi:"りゅうせい",grade:"中3",school:"神沢"},
+  {name:"亀山翔太郎",yomi:"しょうたろう",grade:"中1",school:"神沢"},
+  {name:"石川眞桜",yomi:"まお",grade:"中2",school:"大高"},
   {name:"石口愛莉",yomi:"あいり",grade:"中3",school:"神沢"},
-  {name:"大平恵重奈",yomi:"えりな",grade:"中3",school:"神沢"},
-  {name:"鈴木恵生",yomi:"ゆうき",grade:"中3",school:"神沢"},
-  {name:"黒宮靖孝",yomi:"はるたか",grade:"中3",school:"神沢"},
-  {name:"柳美璃",yomi:"みおん",grade:"中3",school:"神沢"},
-  {name:"岡田佐耶",yomi:"さかや",grade:"中3",school:"濱ノ木"},
-  {name:"杉浦智紗希",yomi:"ちさき",grade:"中3",school:"濱ノ木"},
-  {name:"吉田千穂",yomi:"ちほ",grade:"中3",school:"濱ノ木"},
-  {name:"水野優貴",yomi:"ひろき",grade:"中3",school:"濱ノ木"},
-  {name:"佐々木結衣",yomi:"ゆい",grade:"中3",school:"千島丘"},
-  {name:"本行美優",yomi:"りゅう",grade:"中3",school:"千島丘"},
+  {name:"川副遥斗",yomi:"はると",grade:"中1",school:"神沢"},
+  {name:"杉尾倫太郎",yomi:"りんたろう",grade:"中2",school:"豊明"},
+  {name:"大平恵里奈",yomi:"えりな",grade:"中3",school:"神沢"},
+  {name:"小林新",yomi:"あらた",grade:"中1",school:"久方"},
+  {name:"佃友愛",yomi:"ゆうな",grade:"中2",school:"天白南"},
+  {name:"鈴木悠生",yomi:"ゆうき",grade:"中3",school:"神沢"},
+  {name:"親松紬",yomi:"つむぎ",grade:"中1",school:"久方"},
+  {name:"杉江美実",yomi:"みみ",grade:"中2",school:"椙山"},
+  {name:"黒宮晴孝",yomi:"はるたか",grade:"中3",school:"滝ノ水"},
+  {name:"原田悠聖",yomi:"ゆうせい",grade:"中1",school:"滝ノ水"},
+  {name:"柳美温",yomi:"みおん",grade:"中3",school:"滝ノ水"},
+  {name:"岩井杏俐",yomi:"あんり",grade:"中1",school:"原"},
+  {name:"岡田咲耶",yomi:"さくや",grade:"中3",school:"滝ノ水"},
+  {name:"戸田葵",yomi:"あおい",grade:"中1",school:"椙山"},
+  {name:"杉浦智紗希",yomi:"ちさき",grade:"中3",school:"滝ノ水"},
+  {name:"吉田千穂",yomi:"ちほ",grade:"中3",school:"滝ノ水"},
+  {name:"水野博貴",yomi:"ひろき",grade:"中3",school:"千鳥丘"},
+  {name:"佐々木結衣",yomi:"ゆい",grade:"中3",school:"千鳥丘"},
+  {name:"本行里優",yomi:"りゆ",grade:"中3",school:"千鳥丘"},
   {name:"西山蒼大",yomi:"あおと",grade:"中3",school:"扇台"},
-  {name:"井村莉唱",yomi:"りこ",grade:"中3",school:"扇台"},
-  {name:"松原義志",yomi:"そうし",grade:"中3",school:"本城"},
+  {name:"井村莉瑚",yomi:"りこ",grade:"中3",school:"扇台"},
+  {name:"松原颯志",yomi:"そうし",grade:"中3",school:"本城"},
   {name:"小口夢仁",yomi:"ゆに",grade:"中3",school:"本城"},
-  {name:"浅野斗須",yomi:"とうま",grade:"中3",school:"天白星"},
+  {name:"浅野斗須",yomi:"とうま",grade:"中3",school:"天白"},
   {name:"清水瑠愛",yomi:"るめ",grade:"中3",school:"鳴海"},
-  {name:"松尾健生",yomi:"けんせい",grade:"中3",school:"名東"},
-  {name:"池田理沙子",yomi:"りさこ",grade:"中3",school:"源徳"},
+  {name:"松尾健生",yomi:"けんせい",grade:"中3",school:"名電"},
+  {name:"池田理沙子",yomi:"りさこ",grade:"中3",school:"淑徳"}
 ];
 
 // ===== STATE =====
@@ -591,7 +601,7 @@ async function loadStudents() {
       }
       _students = list;
     }
-  } catch(e) { console.error('loadStudents error:', e); _students = BASE_STUDENTS.map((s,i)=>({...s,id:'s'+i})); }
+  } catch(e) { console.error('loadStudents error:', e); if(!_students || !_students.length) _students = BASE_STUDENTS.map((s,i)=>({...s,id:'s'+i})); }
 }
 async function saveStudents(list) {
   _students = list;
@@ -614,7 +624,7 @@ async function loadRecords() {
     if (!res.ok) { _records = []; return; }
     const rows = await res.json();
     _records = (rows || []).map(recFromDb);
-  } catch(e) { console.error('loadRecords error:', e); _records = []; }
+  } catch(e) { console.error('loadRecords error:', e); if(!_records) _records = []; }
 }
 function recToDb(r) {
   // アプリ内キャメルケース → DB列名スネークケース（idは除外、DB自動採番）
@@ -933,11 +943,13 @@ function filterHistGrade(grade, btn) {
 function renderHistory(q='') {
   const records = getRecords();
   const el = document.getElementById('history-list');
-  let list = records;
+  let list = [...records];
   if (histGrade!=='all') list = list.filter(r=>r.grade===histGrade);
   if (q) list = list.filter(r=>
     (r.studentName||'').includes(q)||(r.instruction||'').includes(q)||(r.subject||'').includes(q)
   );
+  // 日付昇順（古い順）
+  list.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
   if (!list.length) {
     el.innerHTML='<div class="empty-state"><div class="icon">📋</div>記録がありません</div>';
     return;
@@ -973,14 +985,19 @@ function openRecordEdit(id) {
 }
 function closeRecordModal() { document.getElementById('record-modal').classList.remove('open'); }
 async function saveRecordModal() {
+  const dateVal = document.getElementById('rm-date').value;
   const updated = {
-    subject: document.getElementById('rm-subject').value,
+    date:        dateVal || undefined,
+    dateDisplay: dateVal ? (()=>{ const d=new Date(dateVal+'T00:00:00'); return d.toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit',weekday:'short'}); })() : undefined,
+    subject:     document.getElementById('rm-subject').value,
     testContent: document.getElementById('rm-test').value,
-    hasTest: !!document.getElementById('rm-test').value,
+    hasTest:     !!document.getElementById('rm-test').value,
     instruction: document.getElementById('rm-instr').value,
-    homework: document.getElementById('rm-homework').value,
-    memo: document.getElementById('rm-memo').value,
+    homework:    document.getElementById('rm-homework').value,
+    memo:        document.getElementById('rm-memo').value,
   };
+  // undefinedを除去
+  Object.keys(updated).forEach(k => updated[k]===undefined && delete updated[k]);
   await updateOneRecord(editingRecordId, updated);
   closeRecordModal();
   renderHistory(document.getElementById('hist-search').value);
@@ -989,71 +1006,97 @@ async function saveRecordModal() {
 
 // ===== TODAY =====
 function renderToday() {
-  // date picker 初期化
   const dpEl = document.getElementById('today-date-picker');
   if (dpEl && !dpEl.value) dpEl.value = getTodayKey();
-
   const dateKey  = dpEl && dpEl.value ? dpEl.value : getTodayKey();
   const isToday  = dateKey === getTodayKey();
   const dateDisp = (()=>{ const d=new Date(dateKey+'T00:00:00'); return d.toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit',weekday:'short'}); })();
 
-  const records  = _records || [];
+  const records   = _records || [];
   const todayRecs = records.filter(r => r.date === dateKey);
-  const names    = [...new Set(todayRecs.map(r => r.studentName))];
+  const names     = [...new Set(todayRecs.map(r => r.studentName))];
+  const absences  = getAbsences();
+  const absentNames = absences[dateKey] || [];
+
+  // 欠席者も含めた全生徒リスト（欠席者を上に固定）
+  const allNames = [...new Set([...absentNames, ...names])];
 
   document.getElementById('today-count').textContent    = todayRecs.length;
-  document.getElementById('today-students').textContent = names.length;
+  document.getElementById('today-students').textContent = names.length + (absentNames.length ? ` (+${absentNames.length}欠席)` : '');
 
-  // 今日予定の生徒リストバー
+  // 予定の生徒バー
   const bar     = document.getElementById('today-scheduled-bar');
   const barList = document.getElementById('today-scheduled-list');
   if (bar) {
-    if (isToday && names.length > 0) {
+    if (isToday && allNames.length > 0) {
       bar.style.display = 'block';
-      // 全生徒データをwindowに保持してフィルタリングに使う
-      window._scheduledStudents = names.map(name => {
+      window._scheduledStudents = allNames.map(name => {
         const s     = getStudents().find(st => st.name === name);
         const subjs = [...new Set(todayRecs.filter(r => r.studentName === name).map(r => r.subject))];
-        return { name, grade: s?.grade||'', school: s?.school||'', subjs };
+        const absent = absentNames.includes(name);
+        return { name, grade: s?.grade||'', school: s?.school||'', subjs, absent };
       });
       renderScheduledList('all');
     } else {
       bar.style.display = 'none';
-      window._scheduledStudents = [];
     }
   }
 
   const el = document.getElementById('today-list');
   if (!el) return;
 
-  if (!todayRecs.length) {
+  if (!allNames.length) {
     el.innerHTML = `<div class="empty-state"><div class="icon">📅</div>${isToday ? '本日の指示はまだありません' : dateDisp + ' の指示はありません'}</div>`;
     return;
   }
 
   const students = getStudents();
   let html = '';
-  names.forEach(name => {
-    const srecs  = todayRecs.filter(r => r.studentName === name);
-    const s      = students.find(st => st.name === name);
-    const safeId = encodeURIComponent(name);
-    html += `<div class="card">
-      <div class="card-title" style="display:flex;align-items:center;justify-content:space-between">
-        <span>${name}<span style="font-size:11px;color:var(--gray-3);font-weight:400;margin-left:6px">${s?.grade||''} ${s?.school||''}</span></span>
-        <button class="print-btn" style="width:auto;padding:6px 12px;font-size:12px;margin:0" onclick="printStudent('${safeId}')">🖨️ 印刷</button>
+
+  allNames.forEach(name => {
+    const absent  = absentNames.includes(name);
+    const srecs   = todayRecs.filter(r => r.studentName === name);
+    const s       = students.find(st => st.name === name);
+    const safeId  = encodeURIComponent(name);
+    const safeName = name.replace(/'/g, "\\'");
+
+    const cardStyle = absent
+      ? 'border:2px solid #ef4444;background:#fff5f5;'
+      : '';
+    const absentBtnStyle = absent
+      ? 'background:#ef4444;color:white;border:none;'
+      : 'background:#fee2e2;color:#ef4444;border:1px solid #fca5a5;';
+
+    html += `<div class="card" style="${cardStyle}margin-bottom:10px">
+      <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+        <span>${absent ? '🔴 ' : ''}${name}<span style="font-size:11px;color:var(--gray-3);font-weight:400;margin-left:6px">${s?.grade||''} ${s?.school||''}</span></span>
+        <div style="display:flex;gap:6px;align-items:center">
+          <button onclick="toggleAbsence('${dateKey}','${safeName}')" style="${absentBtnStyle}padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">
+            ${absent ? '✓ 欠席' : '欠席'}
+          </button>
+          <button class="print-btn" style="width:auto;padding:6px 12px;font-size:12px;margin:0" onclick="printStudent('${safeId}')">🖨️ 印刷</button>
+        </div>
       </div>`;
+
+    if (absent) {
+      html += `<div style="font-size:13px;color:#ef4444;padding:6px 0">この日は欠席</div>`;
+    }
+
     srecs.forEach(r => {
       html += `<div style="margin-bottom:8px;display:flex;align-items:flex-start;gap:6px;flex-wrap:wrap">
         <span class="hist-subj subj-${r.subject}">${r.subject}</span>
         <div style="flex:1">
-          <div style="font-size:13px">${r.hasTest ? '【テスト】'+(r.testContent||'')+'　→　' : ''}${r.instruction}${r.memo ? '　📝'+r.memo : ''}</div>
+          <div style="font-size:13px">${r.hasTest||r.has_test ? '【テスト】'+(r.testContent||r.test_content||'')+'　→　' : ''}${r.instruction||''}${r.memo ? '　📝'+r.memo : ''}</div>
           ${r.homework ? `<div style="font-size:12px;color:#9d174d;margin-top:2px">📚 ${r.homework}</div>` : ''}
         </div>
-        <button onclick="openRecordEdit(${r.id})" style="background:var(--gray-1);border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;flex-shrink:0">✏️</button>
+        <button onclick="openRecordEditDirect('${r.date}','${(r.studentName||'').replace(/'/g,'')}','${(r.subject||'').replace(/'/g,'')}','${(r.instruction||'').replace(/'/g,'').replace(/
+/g,' ').slice(0,50)}')" style="background:var(--gray-1);border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;flex-shrink:0">✏️</button>
       </div>`;
     });
+
     html += '</div>';
   });
+
   el.innerHTML = html;
 }
 
@@ -1549,22 +1592,20 @@ function renderScheduledList(grade) {
   const el = document.getElementById('today-scheduled-list');
   if (!el) return;
   if (!filtered.length) {
-    el.innerHTML = `<div style="font-size:12px;color:var(--gray-3)">${grade === 'all' ? '予定なし' : grade + 'の予定なし'}</div>`;
+    el.innerHTML = `<div style="font-size:12px;color:var(--gray-3)">${grade==='all'?'予定なし':grade+'の予定なし'}</div>`;
     return;
   }
-  // 学年別にグループ化して表示
   const grades = grade === 'all' ? ['中1','中2','中3'] : [grade];
   let html = '';
   grades.forEach(g => {
     const gList = filtered.filter(s => s.grade === g);
     if (!gList.length) return;
-    if (grade === 'all') {
-      html += `<div style="width:100%;font-size:11px;font-weight:700;color:var(--text-sub);margin-top:4px;margin-bottom:2px">${g}</div>`;
-    }
+    if (grade === 'all') html += `<div style="width:100%;font-size:11px;font-weight:700;color:var(--text-sub);margin-top:4px;margin-bottom:2px">${g}</div>`;
     html += gList.map(s => `
-      <div style="background:white;border-radius:8px;padding:5px 10px;font-size:12px;border:1px solid var(--green-mid);display:flex;align-items:center;gap:6px">
-        <span style="font-weight:700">${s.name}</span>
-        <span style="color:var(--green);font-size:11px">${s.subjs.join('・')}</span>
+      <div style="background:${s.absent?'#fee2e2':'white'};border-radius:8px;padding:5px 10px;font-size:12px;border:1px solid ${s.absent?'#fca5a5':'var(--green-mid)'};display:flex;align-items:center;gap:6px">
+        ${s.absent?'🔴 ':''}
+        <span style="font-weight:700;${s.absent?'color:#ef4444;':''}">${s.name}</span>
+        <span style="color:var(--green);font-size:11px">${s.absent?'欠席':s.subjs.join('・')}</span>
       </div>`).join('');
   });
   el.innerHTML = html;
@@ -1628,6 +1669,155 @@ function openRecordEditByIdx(idx) {
   if (!rec) return;
   editingRecordId = rec.id;
   window._editingRecIdx = idx;
+  document.getElementById('rm-date').value = rec.date || '';
+  document.getElementById('rm-subject').value = rec.subject || '';
+  document.getElementById('rm-test').value = rec.testContent || rec.test_content || '';
+  document.getElementById('rm-instr').value = rec.instruction || '';
+  document.getElementById('rm-homework').value = rec.homework || '';
+  document.getElementById('rm-memo').value = rec.memo || '';
+  document.getElementById('record-modal').classList.add('open');
+}
+
+function printStudent(encodedName) {
+  const name = decodeURIComponent(encodedName);
+  const records = _records || [];
+  const students = getStudents();
+  const ps = getPS();
+  const s = students.find(st=>st.name===name);
+  const sid = s?.id;
+
+  const now = new Date();
+  const oneMonthAgo = new Date(now.getFullYear(), now.getMonth()-1, now.getDate());
+  const filtered = records.filter(r=>{
+    const d = new Date((r.date||'') + 'T00:00:00');
+    return (r.studentName===name) && d >= oneMonthAgo && d <= now;
+  }).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+
+  const todayStr = now.toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit'});
+  const oneMonthAgoStr = oneMonthAgo.toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit'});
+
+  // ── 指示表 ──
+  const dates = [...new Set(filtered.map(r=>r.date))];
+  let instrRows = '';
+  dates.forEach(date=>{
+    const drecs = filtered.filter(r=>r.date===date);
+    const dDisp = drecs[0].dateDisplay || date;
+    instrRows += `<tr><td colspan="3" style="background:#e8f5ee;font-weight:700;font-size:12px;padding:5px 8px;border:1px solid #ccc;color:#2d6a4f">📅 ${dDisp}</td></tr>`;
+    drecs.forEach(r=>{
+      instrRows += `<tr>
+        <td style="border:1px solid #ccc;padding:6px 8px;text-align:center;font-size:12px;white-space:nowrap;vertical-align:top">${r.subject||''}</td>
+        <td style="border:1px solid #ccc;padding:6px 8px;font-size:12px;vertical-align:top">${(r.hasTest||r.has_test)?'【テスト】'+(r.testContent||r.test_content||'')+'　→　':''}${r.instruction||''}${r.memo?'　📝'+r.memo:''}</td>
+        <td style="border:1px solid #ccc;padding:6px 8px;font-size:12px;color:#7c1d6f;vertical-align:top">${r.homework||''}</td>
+      </tr>`;
+    });
+  });
+
+  // ── 進行表 ──
+  const tbs = sid ? ((ps[sid]||{}).textbooks||[]) : [];
+  let progHtml = '';
+  tbs.forEach(tb => {
+    const rows = ((ps[sid]||{}).data||{})[tb.key]||[];
+    if (!rows.length) return;
+    progHtml += `<div style="margin-bottom:14px">
+      <div style="font-size:12px;font-weight:700;color:#2d6a4f;background:#e8f5ee;padding:5px 10px;border-radius:6px;margin-bottom:5px">${tb.name}（${tb.grade}）</div>
+      <table style="width:100%;border-collapse:collapse;font-size:10px">
+        <tr style="background:#f5f5f5">
+          <th style="border:1px solid #ccc;padding:4px 5px;width:12%">STEP</th>
+          <th style="border:1px solid #ccc;padding:4px 5px">タイトル</th>
+          <th style="border:1px solid #ccc;padding:4px 5px;width:8%;text-align:center">P</th>
+          <th style="border:1px solid #ccc;padding:4px 5px;width:9%;text-align:center">実施日</th>
+          <th style="border:1px solid #ccc;padding:4px 5px;width:7%;text-align:center">CT</th>
+          <th style="border:1px solid #ccc;padding:4px 5px;width:8%;text-align:center">補習</th>
+          <th style="border:1px solid #ccc;padding:4px 5px;width:7%;text-align:center">再CT</th>
+          <th style="border:1px solid #ccc;padding:4px 5px;width:9%;text-align:center">定期前</th>
+        </tr>`;
+    rows.forEach(r=>{
+      const anyFilled = r.date||r.ct||r.review||r.retest||r.precheck;
+      const bg = anyFilled ? 'background:#f0faf4;' : '';
+      const bt = r.testRangeStart ? 'border-top:2px solid #e67e22;' : '';
+      const bb = r.testRangeEnd   ? 'border-bottom:2px solid #e67e22;' : '';
+      const ctBg  = r.ct==='×'     ? 'background:#fee2e2;color:#c0392b;font-weight:700;' : r.ct ? 'background:#bae6fd;' : '';
+      const rvBg  = r.review==='未' ? 'background:#fee2e2;color:#c0392b;font-weight:700;' : r.review ? 'background:#bae6fd;' : '';
+      const rtBg  = r.retest==='×'  ? 'background:#fee2e2;color:#c0392b;font-weight:700;' : r.retest ? 'background:#bae6fd;' : '';
+      progHtml += `<tr style="${bg}${bt}${bb}">
+        <td style="border:1px solid #eee;padding:3px 5px;color:#888">${r.step||'—'}</td>
+        <td style="border:1px solid #eee;padding:3px 5px">${r.title||''}</td>
+        <td style="border:1px solid #eee;padding:3px 5px;text-align:center;color:#666">${r.page||''}</td>
+        <td style="border:1px solid #eee;padding:3px 5px;text-align:center;${r.date?'background:#bae6fd;':''}">${r.date||''}</td>
+        <td style="border:1px solid #eee;padding:3px 5px;text-align:center;${ctBg}">${r.ct||''}</td>
+        <td style="border:1px solid #eee;padding:3px 5px;text-align:center;${rvBg}">${r.review||''}</td>
+        <td style="border:1px solid #eee;padding:3px 5px;text-align:center;${rtBg}">${r.retest||''}</td>
+        <td style="border:1px solid #eee;padding:3px 5px;text-align:center;${r.precheck?'background:#bae6fd;':''}">${r.precheck||''}</td>
+      </tr>`;
+    });
+    progHtml += '</table></div>';
+  });
+
+  const previewContent = document.getElementById('pdf-preview-content');
+  previewContent.innerHTML = `
+    <div style="font-family:'Hiragino Sans','Meiryo',sans-serif;padding:16px">
+      <h2 style="text-align:center;font-size:17px;margin-bottom:3px">学習レポート</h2>
+      <div style="text-align:center;font-size:13px;margin-bottom:2px;font-weight:700">${name}（${s?.grade||''} ${s?.school||''}）</div>
+      <div style="text-align:center;font-size:11px;color:#666;margin-bottom:16px">${todayStr} 発行</div>
+
+      <div style="font-size:13px;font-weight:700;background:#e8f5ee;padding:6px 10px;border-radius:6px;margin-bottom:8px">
+        📝 学習指示表（${oneMonthAgoStr}〜${todayStr}）
+      </div>
+      ${filtered.length ? `<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:20px">
+        <thead><tr>
+          <th style="background:#2d6a4f;color:white;padding:6px;text-align:center;border:1px solid #ccc;width:9%">科目</th>
+          <th style="background:#2d6a4f;color:white;padding:6px;text-align:center;border:1px solid #ccc;width:57%">実施内容指示</th>
+          <th style="background:#2d6a4f;color:white;padding:6px;text-align:center;border:1px solid #ccc;width:34%">宿題</th>
+        </tr></thead>
+        <tbody>${instrRows}</tbody>
+      </table>` : '<div style="font-size:12px;color:#888;padding:8px;margin-bottom:16px">この期間の記録がありません</div>'}
+
+      ${progHtml ? `<div style="font-size:13px;font-weight:700;background:#e8f5ee;padding:6px 10px;border-radius:6px;margin-bottom:10px">
+        📊 進行表（全期間）
+      </div>${progHtml}` : ''}
+    </div>`;
+
+  const modal = document.getElementById('pdf-preview-modal');
+  modal.style.display = 'flex';
+}
+
+
+
+// ===== 欠席管理 =====
+function getAbsences() {
+  try { return JSON.parse(localStorage.getItem('midori_absences')||'{}'); } catch(e) { return {}; }
+}
+function saveAbsences(d) { localStorage.setItem('midori_absences', JSON.stringify(d)); }
+
+function toggleAbsence(dateKey, studentName) {
+  const abs = getAbsences();
+  if (!abs[dateKey]) abs[dateKey] = [];
+  const idx = abs[dateKey].indexOf(studentName);
+  if (idx >= 0) {
+    abs[dateKey].splice(idx, 1);
+  } else {
+    abs[dateKey].push(studentName);
+  }
+  saveAbsences(abs);
+  renderToday();
+}
+
+function isAbsent(dateKey, studentName) {
+  const abs = getAbsences();
+  return (abs[dateKey]||[]).includes(studentName);
+}
+
+function openRecordEditDirect(date, studentName, subject, instrSnippet) {
+  // _records から一致するレコードを探す
+  const rec = (_records||[]).find(r =>
+    r.date === date &&
+    (r.studentName||r.student_name||'') === studentName &&
+    (r.subject||'') === subject &&
+    (r.instruction||'').slice(0,50) === instrSnippet
+  );
+  if (!rec) { showToast('⚠️ 記録が見つかりません'); return; }
+  editingRecordId = rec.id;
+  document.getElementById('rm-date').value = rec.date || '';
   document.getElementById('rm-subject').value = rec.subject || '';
   document.getElementById('rm-test').value = rec.testContent || rec.test_content || '';
   document.getElementById('rm-instr').value = rec.instruction || '';
