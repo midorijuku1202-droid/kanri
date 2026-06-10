@@ -1829,12 +1829,29 @@ function openRecordEditDirect(date, studentName, subject, instrSnippet) {
 async function initApp() {
   showLoadingOverlay('データを読み込み中...');
   try {
-    await Promise.all([loadStudents(), loadRecords(), loadPS(), loadCustomMaster()]);
+    // 各ロードを個別に実行してエラーがあっても続行
+    try { await loadStudents(); } catch(e) { console.error('loadStudents:', e); }
+    try { await loadRecords(); } catch(e) { console.error('loadRecords:', e); }
+    try { await loadPS(); } catch(e) { console.error('loadPS:', e); }
+    try { await loadCustomMaster(); } catch(e) { console.error('loadCustomMaster:', e); }
+    // 生徒データがない場合はBASE_STUDENTSを使う
+    if (!_students || !_students.length) {
+      _students = BASE_STUDENTS.map((s,i)=>({...s, id:'s'+i}));
+    }
+    if (!_records) _records = [];
+    if (!_ps) _ps = {};
+    if (!_cm) _cm = {};
     renderStudents();
     hideLoadingOverlay();
   } catch(e) {
     hideLoadingOverlay();
-    showToast('⚠️ 読み込みエラー。再読込してください');
+    // エラーでも生徒一覧は表示する
+    if (!_students || !_students.length) {
+      _students = BASE_STUDENTS.map((s,i)=>({...s, id:'s'+i}));
+    }
+    if (!_records) _records = [];
+    renderStudents();
+    showToast('⚠️ DB接続エラー。オフラインモードで動作中');
     console.error(e);
   }
 }
