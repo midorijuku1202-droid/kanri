@@ -224,60 +224,107 @@ const sb = {
       <button class="back-btn" onclick="backToList()">← 戻る</button>
     </div>
 
-    <div class="card">
-      <div class="card-title">科目を選択</div>
-      <div class="subject-tabs">
-        <button class="subj-btn active" onclick="selectSubject('英語',this)">英語</button>
-        <button class="subj-btn" onclick="selectSubject('数学',this)">数学</button>
-        <button class="subj-btn" onclick="selectSubject('理科',this)">理科</button>
-        <button class="subj-btn" onclick="selectSubject('地理',this)">地理</button>
-        <button class="subj-btn" onclick="selectSubject('歴史',this)">歴史</button>
-        <button class="subj-btn" onclick="selectSubject('公民',this)">公民</button>
+    <div class="card" style="padding:12px 16px">
+      <div class="card-title" style="margin-bottom:8px">科目を選択（最大2科目）</div>
+      <div id="subject-tabs-multi" style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="subj-multi-btn" onclick="toggleSubject('英語',this)" style="padding:7px 14px;border-radius:20px;border:2px solid var(--gray-2);background:white;font-size:13px;font-weight:600;color:var(--text-sub);cursor:pointer">英語</button>
+        <button class="subj-multi-btn" onclick="toggleSubject('数学',this)" style="padding:7px 14px;border-radius:20px;border:2px solid var(--gray-2);background:white;font-size:13px;font-weight:600;color:var(--text-sub);cursor:pointer">数学</button>
+        <button class="subj-multi-btn" onclick="toggleSubject('理科',this)" style="padding:7px 14px;border-radius:20px;border:2px solid var(--gray-2);background:white;font-size:13px;font-weight:600;color:var(--text-sub);cursor:pointer">理科</button>
+        <button class="subj-multi-btn" onclick="toggleSubject('地理',this)" style="padding:7px 14px;border-radius:20px;border:2px solid var(--gray-2);background:white;font-size:13px;font-weight:600;color:var(--text-sub);cursor:pointer">地理</button>
+        <button class="subj-multi-btn" onclick="toggleSubject('歴史',this)" style="padding:7px 14px;border-radius:20px;border:2px solid var(--gray-2);background:white;font-size:13px;font-weight:600;color:var(--text-sub);cursor:pointer">歴史</button>
+        <button class="subj-multi-btn" onclick="toggleSubject('公民',this)" style="padding:7px 14px;border-radius:20px;border:2px solid var(--gray-2);background:white;font-size:13px;font-weight:600;color:var(--text-sub);cursor:pointer">公民</button>
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-title">📝 指示内容</div>
+    <!-- 科目1入力エリア -->
+    <div class="card" id="subj-card-1" style="display:none">
+      <div class="card-title" id="subj-card-1-title" style="color:var(--green)">📝 科目1</div>
       <div class="instr-row">
         <div class="instr-label">テスト</div>
         <div style="flex:1">
-          <button class="toggle-btn" id="test-toggle" onclick="toggleTest()">なし</button>
-          <input type="text" id="test-content" placeholder="テスト内容（例：U5-1）" style="margin-top:8px;display:none">
+          <button class="toggle-btn" id="test-toggle-1" onclick="toggleTest(1)">なし</button>
+          <input type="text" id="test-content-1" placeholder="テスト内容（例：U5-1）" style="margin-top:8px;display:none">
         </div>
       </div>
-      <div class="instr-row" style="margin-top:12px">
+      <div class="instr-row" style="margin-top:10px">
         <div class="instr-label">実施</div>
         <div style="flex:1">
           <div class="quick-patterns">
-            <button class="pattern-btn" onclick="appendPattern('フォレスタ')">フォレスタ</button>
-            <button class="pattern-btn" onclick="appendPattern('iワーク＋')">iワーク＋</button>
-            <button class="pattern-btn" onclick="appendPattern('iワーク')">iワーク</button>
-            <button class="pattern-btn" onclick="appendPattern('Sirius')">Sirius</button>
-            <button class="pattern-btn" onclick="appendPattern('学校ワーク')">学校ワーク</button>
-            <button class="pattern-btn" onclick="appendPattern('フォレスタ英単語')">フォレスタ英単語</button>
-            <button class="pattern-btn" onclick="appendPattern('フォレスタステップ')">フォレスタステップ</button>
+            <button class="pattern-btn" onclick="appendPattern('フォレスタ',1)">フォレスタ</button>
+            <button class="pattern-btn" onclick="appendPattern('iワーク＋',1)">iワーク＋</button>
+            <button class="pattern-btn" onclick="appendPattern('iワーク',1)">iワーク</button>
+            <button class="pattern-btn" onclick="appendPattern('Sirius',1)">Sirius</button>
+            <button class="pattern-btn" onclick="appendPattern('学校ワーク',1)">学校ワーク</button>
+            <button class="pattern-btn" onclick="appendPattern('フォレスタ英単語',1)">フォレスタ英単語</button>
+            <button class="pattern-btn" onclick="appendPattern('フォレスタステップ',1)">フォレスタステップ</button>
           </div>
-          <textarea id="instr-text" placeholder="実施内容を入力（例：英必修 P98〜進める）" rows="3"></textarea>
+          <textarea id="instr-text-1" placeholder="実施内容を入力" rows="2"></textarea>
         </div>
       </div>
       <div class="instr-row" style="margin-top:8px">
         <div class="instr-label">宿題</div>
         <div style="flex:1">
           <div class="quick-patterns">
-            <button class="pattern-btn" onclick="appendHomework('フォレスタ')">フォレスタ</button>
-            <button class="pattern-btn" onclick="appendHomework('iワーク＋')">iワーク＋</button>
-            <button class="pattern-btn" onclick="appendHomework('iワーク')">iワーク</button>
-            <button class="pattern-btn" onclick="appendHomework('Sirius')">Sirius</button>
-            <button class="pattern-btn" onclick="appendHomework('学校ワーク')">学校ワーク</button>
-            <button class="pattern-btn" onclick="appendHomework('フォレスタ英単語')">フォレスタ英単語</button>
-            <button class="pattern-btn" onclick="appendHomework('フォレスタステップ')">フォレスタステップ</button>
+            <button class="pattern-btn" onclick="appendHomework('フォレスタ',1)">フォレスタ</button>
+            <button class="pattern-btn" onclick="appendHomework('iワーク＋',1)">iワーク＋</button>
+            <button class="pattern-btn" onclick="appendHomework('iワーク',1)">iワーク</button>
+            <button class="pattern-btn" onclick="appendHomework('Sirius',1)">Sirius</button>
+            <button class="pattern-btn" onclick="appendHomework('学校ワーク',1)">学校ワーク</button>
+            <button class="pattern-btn" onclick="appendHomework('フォレスタ英単語',1)">フォレスタ英単語</button>
+            <button class="pattern-btn" onclick="appendHomework('フォレスタステップ',1)">フォレスタステップ</button>
           </div>
-          <textarea id="homework-text" placeholder="宿題内容を入力（任意）" rows="2"></textarea>
+          <textarea id="homework-text-1" placeholder="宿題内容を入力（任意）" rows="2"></textarea>
         </div>
       </div>
       <div class="instr-row" style="margin-top:8px">
         <div class="instr-label">メモ</div>
-        <input type="text" id="memo-text" placeholder="講師メモ（任意）">
+        <input type="text" id="memo-text-1" placeholder="講師メモ（任意）">
+      </div>
+    </div>
+
+    <!-- 科目2入力エリア -->
+    <div class="card" id="subj-card-2" style="display:none">
+      <div class="card-title" id="subj-card-2-title" style="color:var(--green)">📝 科目2</div>
+      <div class="instr-row">
+        <div class="instr-label">テスト</div>
+        <div style="flex:1">
+          <button class="toggle-btn" id="test-toggle-2" onclick="toggleTest(2)">なし</button>
+          <input type="text" id="test-content-2" placeholder="テスト内容（例：U5-1）" style="margin-top:8px;display:none">
+        </div>
+      </div>
+      <div class="instr-row" style="margin-top:10px">
+        <div class="instr-label">実施</div>
+        <div style="flex:1">
+          <div class="quick-patterns">
+            <button class="pattern-btn" onclick="appendPattern('フォレスタ',2)">フォレスタ</button>
+            <button class="pattern-btn" onclick="appendPattern('iワーク＋',2)">iワーク＋</button>
+            <button class="pattern-btn" onclick="appendPattern('iワーク',2)">iワーク</button>
+            <button class="pattern-btn" onclick="appendPattern('Sirius',2)">Sirius</button>
+            <button class="pattern-btn" onclick="appendPattern('学校ワーク',2)">学校ワーク</button>
+            <button class="pattern-btn" onclick="appendPattern('フォレスタ英単語',2)">フォレスタ英単語</button>
+            <button class="pattern-btn" onclick="appendPattern('フォレスタステップ',2)">フォレスタステップ</button>
+          </div>
+          <textarea id="instr-text-2" placeholder="実施内容を入力" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="instr-row" style="margin-top:8px">
+        <div class="instr-label">宿題</div>
+        <div style="flex:1">
+          <div class="quick-patterns">
+            <button class="pattern-btn" onclick="appendHomework('フォレスタ',2)">フォレスタ</button>
+            <button class="pattern-btn" onclick="appendHomework('iワーク＋',2)">iワーク＋</button>
+            <button class="pattern-btn" onclick="appendHomework('iワーク',2)">iワーク</button>
+            <button class="pattern-btn" onclick="appendHomework('Sirius',2)">Sirius</button>
+            <button class="pattern-btn" onclick="appendHomework('学校ワーク',2)">学校ワーク</button>
+            <button class="pattern-btn" onclick="appendHomework('フォレスタ英単語',2)">フォレスタ英単語</button>
+            <button class="pattern-btn" onclick="appendHomework('フォレスタステップ',2)">フォレスタステップ</button>
+          </div>
+          <textarea id="homework-text-2" placeholder="宿題内容を入力（任意）" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="instr-row" style="margin-top:8px">
+        <div class="instr-label">メモ</div>
+        <input type="text" id="memo-text-2" placeholder="講師メモ（任意）">
       </div>
     </div>
 
@@ -855,34 +902,20 @@ function selectSubject(subj, btn) {
   renderRecentHist();
 }
 
-function toggleTest() {
-  testEnabled = !testEnabled;
-  const btn = document.getElementById('test-toggle');
-  const inp = document.getElementById('test-content');
-  btn.textContent = testEnabled?'あり':'なし';
-  btn.classList.toggle('on', testEnabled);
-  inp.style.display = testEnabled?'block':'none';
-  if (!testEnabled) inp.value='';
-}
 
-function appendPattern(text) {
-  const ta = document.getElementById('instr-text');
-  ta.value = ta.value ? ta.value+'　'+text : text;
-  ta.focus();
-}
-function appendHomework(text) {
-  const ta = document.getElementById('homework-text');
-  ta.value = ta.value ? ta.value+'　'+text : text;
-  ta.focus();
-}
+
+
+
 
 function renderRecentHist() {
   if (!currentStudent) return;
   const records = _records || [];
+  // 選択中の科目の履歴を表示（複数科目対応）
+  const subjs = selectedSubjects.length ? selectedSubjects : ['英語'];
   const hist = records.filter(r =>
-    (r.studentName === currentStudent.name || r.student_name === currentStudent.name)
-    && (r.subject === currentSubject)
-  ).slice(0,3);
+    (r.studentName === currentStudent.name || r.student_name === currentStudent.name) &&
+    subjs.includes(r.subject)
+  ).slice(0, 4);
   const el = document.getElementById('recent-hist');
   if (!hist.length) {
     el.innerHTML='<div style="color:var(--gray-3);font-size:13px;text-align:center;padding:12px">履歴なし</div>';
@@ -898,49 +931,50 @@ function renderRecentHist() {
 }
 
 async function saveInstruction() {
-  const instrText = document.getElementById('instr-text').value.trim();
-  const testText  = document.getElementById('test-content').value.trim();
-  const homework  = document.getElementById('homework-text').value.trim();
-  const memo      = document.getElementById('memo-text').value.trim();
-  if (!instrText && !(testEnabled && testText)) {
-    showToast('⚠️ 内容を入力してください'); return;
+  if (selectedSubjects.length === 0) {
+    showToast('⚠️ 科目を1つ以上選択してください'); return;
   }
   const dateKey  = getInstrDate();
   const dateDisp = getInstrDateDisplay(dateKey);
-  const rec = {
-    id:          Date.now(),
-    date:        dateKey,
-    dateDisplay: dateDisp,
-    studentName: currentStudent.name,
-    grade:       currentStudent.grade,
-    school:      currentStudent.school || '',
-    subject:     currentSubject,
-    hasTest:     testEnabled,
-    testContent: testText,
-    instruction: instrText,
-    homework:    homework,
-    memo:        memo
-  };
 
-  await saveOneRecord(rec);
+  const inputs = [
+    { n: 1, subj: selectedSubjects[0], enabled: testEnabled1 },
+    { n: 2, subj: selectedSubjects[1], enabled: testEnabled2 },
+  ].filter(x => x.subj);
 
-  // フォームリセット
-  document.getElementById('test-content').value = '';
-  document.getElementById('instr-text').value   = '';
-  document.getElementById('homework-text').value = '';
-  document.getElementById('memo-text').value     = '';
-  document.getElementById('instr-date').value    = '';
-  testEnabled = false;
-  document.getElementById('test-toggle').textContent = 'なし';
-  document.getElementById('test-toggle').classList.remove('on');
-  document.getElementById('test-content').style.display = 'none';
+  let saved = 0;
+  for (const {n, subj, enabled} of inputs) {
+    const instrText = document.getElementById('instr-text-' + n).value.trim();
+    const testText  = document.getElementById('test-content-' + n).value.trim();
+    const homework  = document.getElementById('homework-text-' + n).value.trim();
+    const memo      = document.getElementById('memo-text-' + n).value.trim();
+    if (!instrText && !(enabled && testText)) continue;
+    const rec = {
+      id:          Date.now() + n,
+      date:        dateKey,
+      dateDisplay: dateDisp,
+      studentName: currentStudent.name,
+      grade:       currentStudent.grade,
+      school:      currentStudent.school || '',
+      subject:     subj,
+      hasTest:     enabled,
+      testContent: testText,
+      instruction: instrText,
+      homework:    homework,
+      memo:        memo
+    };
+    await saveOneRecord(rec);
+    saved++;
+  }
 
-  showToast(`✅ ${currentStudent.name}（${currentSubject}）${dateKey === getTodayKey() ? '今日' : dateDisp}に保存`);
+  if (saved === 0) { showToast('⚠️ 実施内容を入力してください'); return; }
+
+  resetInstrForm();
+  const subjStr = selectedSubjects.filter(s=>s).join('・');
+  showToast(`✅ ${currentStudent.name}（${subjStr}）${dateKey === getTodayKey() ? '今日' : dateDisp}に保存`);
   renderRecentHist();
   renderStudents();
-  if (document.getElementById('view-today')?.classList.contains('active')) {
-    renderToday();
-  }
+  if (document.getElementById('view-today')?.classList.contains('active')) renderToday();
 }
 
 // ===== HISTORY =====
@@ -1846,6 +1880,104 @@ function openRecordEditById(id) {
   document.getElementById('rm-homework').value = rec.homework || '';
   document.getElementById('rm-memo').value = rec.memo || '';
   document.getElementById('record-modal').classList.add('open');
+}
+
+// ===== 2科目対応 =====
+let selectedSubjects = []; // 選択された科目 最大2つ
+let testEnabled1 = false;
+let testEnabled2 = false;
+
+function toggleSubject(subj, btn) {
+  const idx = selectedSubjects.indexOf(subj);
+  if (idx >= 0) {
+    // 選択解除
+    selectedSubjects.splice(idx, 1);
+    btn.style.background = 'white';
+    btn.style.color = 'var(--text-sub)';
+    btn.style.borderColor = 'var(--gray-2)';
+  } else {
+    if (selectedSubjects.length >= 2) {
+      showToast('⚠️ 科目は2つまで選択できます');
+      return;
+    }
+    selectedSubjects.push(subj);
+    btn.style.background = 'var(--green-pale)';
+    btn.style.color = 'var(--green)';
+    btn.style.borderColor = 'var(--green-light)';
+  }
+  // 入力エリアを表示更新
+  updateSubjCards();
+}
+
+function updateSubjCards() {
+  const card1 = document.getElementById('subj-card-1');
+  const card2 = document.getElementById('subj-card-2');
+  if (selectedSubjects[0]) {
+    card1.style.display = 'block';
+    document.getElementById('subj-card-1-title').textContent = '📝 ' + selectedSubjects[0];
+  } else {
+    card1.style.display = 'none';
+  }
+  if (selectedSubjects[1]) {
+    card2.style.display = 'block';
+    document.getElementById('subj-card-2-title').textContent = '📝 ' + selectedSubjects[1];
+  } else {
+    card2.style.display = 'none';
+  }
+}
+
+function toggleTest(n) {
+  if (n === 1) {
+    testEnabled1 = !testEnabled1;
+    const btn = document.getElementById('test-toggle-1');
+    const inp = document.getElementById('test-content-1');
+    btn.textContent = testEnabled1 ? 'あり' : 'なし';
+    btn.classList.toggle('on', testEnabled1);
+    inp.style.display = testEnabled1 ? 'block' : 'none';
+    if (!testEnabled1) inp.value = '';
+  } else {
+    testEnabled2 = !testEnabled2;
+    const btn = document.getElementById('test-toggle-2');
+    const inp = document.getElementById('test-content-2');
+    btn.textContent = testEnabled2 ? 'あり' : 'なし';
+    btn.classList.toggle('on', testEnabled2);
+    inp.style.display = testEnabled2 ? 'block' : 'none';
+    if (!testEnabled2) inp.value = '';
+  }
+}
+
+function appendPattern(text, n) {
+  const ta = document.getElementById('instr-text-' + n);
+  if (ta) { ta.value = ta.value ? ta.value + '　' + text : text; ta.focus(); }
+}
+
+function appendHomework(text, n) {
+  const ta = document.getElementById('homework-text-' + n);
+  if (ta) { ta.value = ta.value ? ta.value + '　' + text : text; ta.focus(); }
+}
+
+function resetInstrForm() {
+  // 科目選択リセット
+  selectedSubjects = [];
+  document.querySelectorAll('.subj-multi-btn').forEach(b => {
+    b.style.background = 'white';
+    b.style.color = 'var(--text-sub)';
+    b.style.borderColor = 'var(--gray-2)';
+  });
+  // 入力エリアリセット
+  for (let n = 1; n <= 2; n++) {
+    document.getElementById('subj-card-' + n).style.display = 'none';
+    document.getElementById('test-toggle-' + n).textContent = 'なし';
+    document.getElementById('test-toggle-' + n).classList.remove('on');
+    document.getElementById('test-content-' + n).style.display = 'none';
+    document.getElementById('test-content-' + n).value = '';
+    document.getElementById('instr-text-' + n).value = '';
+    document.getElementById('homework-text-' + n).value = '';
+    document.getElementById('memo-text-' + n).value = '';
+  }
+  testEnabled1 = false;
+  testEnabled2 = false;
+  document.getElementById('instr-date').value = '';
 }
 // INIT
 async function initApp() {
