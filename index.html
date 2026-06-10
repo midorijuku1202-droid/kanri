@@ -962,6 +962,7 @@ async function saveInstruction() {
 
   resetInstrForm();
   const subjStr = selectedSubjects.filter(s=>s).join('・');
+  window._lastSaveTime = Date.now();
   showToast(`✅ ${currentStudent.name}（${subjStr}）${dateKey === getTodayKey() ? '今日' : dateDisp}に保存`);
   renderRecentHist();
   renderStudents();
@@ -1220,7 +1221,8 @@ async function saveStudentModal() {
       students[idx].grade=document.getElementById('m-grade').value;
       students[idx].school=document.getElementById('m-school').value.trim();
     }
-    showToast('✅ 生徒情報を更新しました');
+    window._lastSaveTime = Date.now();
+  showToast('✅ 生徒情報を更新しました');
   } else {
     students.push({id:'s'+Date.now(), name, yomi:document.getElementById('m-yomi').value.trim(), grade:document.getElementById('m-grade').value, school:document.getElementById('m-school').value.trim()});
     showToast('✅ 生徒を追加しました');
@@ -1248,11 +1250,17 @@ function switchTab(tab) {
   const _ti=['input','history','today','settings','progress','share'].indexOf(tab);
   const _tb=document.querySelectorAll('.tab-btn');
   if(_ti>=0&&_tb[_ti])_tb[_ti].classList.add('active');
-  if(tab==='history'){ renderHistory(); }
-  if(tab==='today'){ renderToday(); }
-  if(tab==='settings')renderSettingsList();
-  if(tab==='progress')renderProgressList();
-  if(tab==='share')renderShareList();
+  const now = Date.now();
+  const skipReload = (now - (window._lastSaveTime||0)) < 4000;
+  if(tab==='history'){
+    if(!skipReload){ loadRecords().then(()=>renderHistory()); } else { renderHistory(); }
+  }
+  if(tab==='today'){
+    if(!skipReload){ loadRecords().then(()=>renderToday()); } else { renderToday(); }
+  }
+  if(tab==='settings'){ loadStudents().then(()=>renderSettingsList()); }
+  if(tab==='progress'){ loadPS().then(()=>renderProgressList()); }
+  if(tab==='share'){ loadRecords().then(()=>renderShareList()); }
 }
 
 // ===== TOAST =====
@@ -2097,25 +2105,17 @@ function shareStudent(encodedName) {
 function openPrintTab() {
   const content = document.getElementById('pdf-preview-content');
   if (!content) return;
-  const printHtml = `<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>学習レポート</title>
-<style>
-  body { font-family: 'Hiragino Sans','Meiryo',sans-serif; margin:0; padding:0; background:white; }
-  @media print { body { margin:0; } }
-</style>
-</head>
-<body>
-${content.innerHTML}
-<script>window.onload=function(){window.print();}<\/script>
-</body>
-</html>`;
-  const blob = new Blob([printHtml], {type:'text/html'});
-  const url = URL.createObjectURL(blob);
-  window.open(url, '_blank');
+  const inner = content.innerHTML;
+  const printHtml = '<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8">'
+    + '<meta name="viewport" content="width=device-width,initial-scale=1.0">'
+    + '<title>学習レポート</title>'
+    + '<style>body{font-family:"Hiragino Sans","Meiryo",sans-serif;margin:0;padding:0;background:white;}'
+    + 'table{border-collapse:collapse;}th,td{border:1px solid #ccc;padding:4px 6px;font-size:11px;}'
+    + '@media print{body{margin:0;}}</style>'
+    + '</head><body>' + inner + '</body></html>';
+  // data URIで開く（iOS Safari対応）
+  const dataUri = 'data:text/html;charset=utf-8,' + encodeURIComponent(printHtml);
+  window.location.href = dataUri;
 }
 // INIT
 async function initApp() {
