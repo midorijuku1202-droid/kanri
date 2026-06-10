@@ -165,13 +165,9 @@ const sb = {
   /* PRINT STYLES */
   #print-area { display:none; }
   @media print {
-    /* プレビューが開いているときはその内容だけ印刷 */
-    body > *:not(#pdf-preview-modal) { display:none !important; }
-    #pdf-preview-modal {
-      display:block !important;
-      position:static !important;
-      background:none !important;
-    }
+    /* プレビュー内容だけ印刷 */
+    body > * { display:none !important; }
+    #pdf-preview-modal { display:block !important; position:static !important; background:white !important; }
     #pdf-preview-modal > div:first-child,
     #pdf-preview-modal > div:nth-child(2),
     #pdf-preview-modal > div:last-child { display:none !important; }
@@ -180,9 +176,10 @@ const sb = {
       overflow:visible !important;
       max-height:none !important;
       padding:0 !important;
+      background:white !important;
     }
-  }
     body { background:white; }
+  }
     #print-area { display:block !important; }
   }
   @keyframes spin{to{transform:rotate(360deg)}}
@@ -2356,9 +2353,9 @@ function renderPimTable() {
   }
 
   if (isKokugo) {
-    thead.innerHTML = `<tr style="${GR}">${TH('60px','No.')}${TH('','問題')}${TH('65px','実施日')}${TH('50px','合否')}${TH('55px','テスト範囲')}</tr>`;
+    thead.innerHTML = `<tr style="${GR}">${TH('60px','No.')}${TH('','問題')}${TH('65px','実施日')}${TH('50px','合否')}</tr>`;
   } else if (is10min) {
-    thead.innerHTML = `<tr style="${GR}">${TH('60px','No.')}${TH('','科目')}${TH('65px','実施日')}${TH('50px','合否')}${TH('50px','再テスト')}${TH('55px','テスト範囲')}</tr>`;
+    thead.innerHTML = `<tr style="${GR}">${TH('60px','No.')}${TH('','科目')}${TH('65px','実施日')}${TH('50px','合否')}${TH('50px','再テスト')}</tr>`;
   } else {
     thead.innerHTML = `<tr style="${GR}">${TH('60px','STEP')}${TH('','タイトル')}${TH('65px','教科書P')}${TH('58px','実施日')}${TH('48px','確認CT')}${TH('55px','補習日')}${TH('48px','再CT')}${TH('45px','定期前')}${TH('52px','テスト範囲')}</tr>`;
   }
@@ -2405,7 +2402,6 @@ function renderPimTable() {
         <td style="padding:5px 5px;font-size:12px;vertical-align:middle">${escH(r.title)}</td>
         <td style="padding:3px;text-align:center;vertical-align:middle">${inp('date','6/9','58px')}</td>
         <td style="padding:3px;text-align:center;vertical-align:middle">${inp('ct','○/×','44px')}</td>
-        <td style="padding:3px;text-align:center;vertical-align:middle">${rangeBtn}</td>
       </tr>`;
     } else if (is10min) {
       return `<tr id="pimr${i}" style="border-bottom:1px solid var(--gray-1);${bgRow}${borderT}${borderB}${borderNoTop}">
@@ -2414,7 +2410,6 @@ function renderPimTable() {
         <td style="padding:3px;text-align:center;vertical-align:middle">${inp('date','6/9','58px')}</td>
         <td style="padding:3px;text-align:center;vertical-align:middle">${inp('ct','○/×','44px')}</td>
         <td style="padding:3px;text-align:center;vertical-align:middle">${inp('retest','○/×','44px')}</td>
-        <td style="padding:3px;text-align:center;vertical-align:middle">${rangeBtn}</td>
       </tr>`;
     } else {
       return `<tr id="pimr${i}" style="border-bottom:1px solid var(--gray-1);${bgRow}${borderT}${borderB}">
