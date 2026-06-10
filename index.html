@@ -165,12 +165,23 @@ const sb = {
   /* PRINT STYLES */
   #print-area { display:none; }
   @media print {
-    header, .tabs, .grade-select, .search-box, .add-student-btn,
-    #student-select-panel, #instruction-panel, #view-history,
-    #view-settings, #view-input, #view-today .stats-grid,
-    .print-btn, #today-list,
-    .hist-actions, .back-btn, .save-btn,
-    .toast, .modal-overlay { display:none !important; }
+    /* プレビューが開いているときはその内容だけ印刷 */
+    body > *:not(#pdf-preview-modal) { display:none !important; }
+    #pdf-preview-modal {
+      display:block !important;
+      position:static !important;
+      background:none !important;
+    }
+    #pdf-preview-modal > div:first-child,
+    #pdf-preview-modal > div:nth-child(2),
+    #pdf-preview-modal > div:last-child { display:none !important; }
+    #pdf-preview-content {
+      display:block !important;
+      overflow:visible !important;
+      max-height:none !important;
+      padding:0 !important;
+    }
+  }
     body { background:white; }
     #print-area { display:block !important; }
   }
