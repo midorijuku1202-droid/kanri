@@ -212,6 +212,7 @@ const sb = {
         <div class="s-info" id="sel-info"></div>
       </div>
       <button class="back-btn" onclick="openStudentProgress()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35);margin-right:6px">📊 進行表</button>
+      <button class="back-btn" onclick="pasteRecord()" id="paste-btn" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35);margin-right:6px">📋 貼り付け</button>
       <button class="back-btn" onclick="backToList()">← 戻る</button>
     </div>
 
@@ -1047,6 +1048,7 @@ function renderHistory(q='') {
       ${r.homework?`<div class="hist-homework">📚 宿題：${r.homework}</div>`:''}
       <div class="hist-actions">
         <button class="btn-edit" onclick="openRecordEditByIdx(${idx})">✏️ 修正</button>
+        <button class="btn-edit" style="background:#e0f2fe;color:#0369a1" onclick="copyRecord(${r.id})">📋 コピー</button>
         <button class="btn-del" onclick="deleteRecordByIdx(${idx})">🗑️ 削除</button>
       </div>
     </div>`).join('');
@@ -1091,74 +1093,97 @@ async function saveRecordModal() {
 function renderToday() {
   const dpEl = document.getElementById('today-date-picker');
   if (dpEl && !dpEl.value) dpEl.value = getTodayKey();
-  const dateKey  = dpEl && dpEl.value ? dpEl.value : getTodayKey();
-  const isToday  = dateKey === getTodayKey();
-  const dateDisp = (()=>{ const d=new Date(dateKey+'T00:00:00'); return d.toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit',weekday:'short'}); })();
+  const dateKey = dpEl && dpEl.value ? dpEl.value : getTodayKey();
+  const dow = getDateDow(dateKey);
+  const isToday = dateKey === getTodayKey();
 
-  const records   = _records || [];
+  const records = _records || [];
   const todayRecs = records.filter(r => r.date === dateKey);
-  const names     = [...new Set(todayRecs.map(r => r.studentName))];
-  const absences  = getAbsences();
+  const absences = getAbsences();
   const absentNames = absences[dateKey] || [];
+  const transfers = getTransfersForDate(dateKey);
+  const transferNames = transfers.map(t => t.name);
 
-  // 欠席者も含めた全生徒リスト（欠席者を上に固定）
-  const allNames = [...new Set([...absentNames, ...names])];
+  const sched = getDaySchedule();
+  const students = getStudents();
+  const scheduledStudents = students.filter(s => (sched[s.id]||[]).includes(dow));
+  const scheduledNames = scheduledStudents.map(s => s.name);
+  const recordedNames = [...new Set(todayRecs.map(r => r.studentName))];
+  const allNames = [...new Set([...absentNames, ...transferNames, ...scheduledNames, ...recordedNames])];
 
-  document.getElementById('today-count').textContent    = todayRecs.length;
-  document.getElementById('today-students').textContent = names.length + (absentNames.length ? ` (+${absentNames.length}欠席)` : '');
+  document.getElementById('today-count').textContent = todayRecs.length;
+  document.getElementById('today-students').textContent =
+    scheduledNames.length + '人予定' + (transferNames.length ? '+'+transferNames.length+'振替' : '') + (recordedNames.length ? '（'+recordedNames.length+'人記入済）' : '');
 
-  // 予定の生徒バー
-  const bar     = document.getElementById('today-scheduled-bar');
-  const barList = document.getElementById('today-scheduled-list');
-  if (bar) {
-    if (isToday && allNames.length > 0) {
-      bar.style.display = 'block';
-      window._scheduledStudents = allNames.map(name => {
-        const s     = getStudents().find(st => st.name === name);
-        const subjs = [...new Set(todayRecs.filter(r => r.studentName === name).map(r => r.subject))];
-        const absent = absentNames.includes(name);
-        return { name, grade: s?.grade||'', school: s?.school||'', subjs, absent };
-      });
-      renderScheduledList('all');
-    } else {
-      bar.style.display = 'none';
-    }
-  }
+  const titleEl = document.getElementById('today-scheduled-title');
+  if (titleEl) titleEl.textContent = `📋 ${dow}曜日の生徒（${scheduledNames.length}人）${transferNames.length?'＋振替'+transferNames.length+'人':''}`;
+
+  window._scheduledStudents = allNames.map(name => {
+    const s = students.find(st => st.name === name);
+    const hasRecord = recordedNames.includes(name);
+    const absent = absentNames.includes(name);
+    const isTransfer = transferNames.includes(name);
+    const subjs = [...new Set(todayRecs.filter(r => r.studentName === name).map(r => r.subject))];
+    return { name, grade: s?.grade||'', school: s?.school||'', subjs, absent, hasRecord, isTransfer };
+  });
+  renderScheduledList('all');
 
   const el = document.getElementById('today-list');
   if (!el) return;
 
   if (!allNames.length) {
-    el.innerHTML = `<div class="empty-state"><div class="icon">📅</div>${isToday ? '本日の指示はまだありません' : dateDisp + ' の指示はありません'}</div>`;
+    el.innerHTML = `<div class="empty-state"><div class="icon">📅</div>${dow}曜日に登録された生徒がいません</div>`;
     return;
   }
 
-  const students = getStudents();
-  let html = '';
+  const sortedNames = [
+    ...absentNames,
+    ...transferNames.filter(n => !absentNames.includes(n)),
+    ...scheduledNames.filter(n => !absentNames.includes(n) && !transferNames.includes(n) && !recordedNames.includes(n)),
+    ...recordedNames.filter(n => !absentNames.includes(n) && !transferNames.includes(n)),
+    ...recordedNames.filter(n => !scheduledNames.includes(n) && !transferNames.includes(n) && !absentNames.includes(n))
+  ].filter((n,i,a) => a.indexOf(n) === i);
 
-  allNames.forEach(name => {
-    const absent  = absentNames.includes(name);
-    const srecs   = todayRecs.filter(r => r.studentName === name);
-    const s       = students.find(st => st.name === name);
-    const safeId  = encodeURIComponent(name);
+  let html = '';
+  sortedNames.forEach(name => {
+    const absent = absentNames.includes(name);
+    const hasRec = recordedNames.includes(name);
+    const isTransfer = transferNames.includes(name);
+    const transferInfo = transfers.find(t => t.name === name);
+    const srecs = todayRecs.filter(r => r.studentName === name);
+    const s = students.find(st => st.name === name);
+    const safeId = encodeURIComponent(name);
     const safeName = name.replace(/'/g, "\\'");
 
-    const cardStyle = absent
-      ? 'border:2px solid #ef4444;background:#fff5f5;'
-      : '';
+    // カードスタイル
+    let cardStyle = '';
+    if (absent) cardStyle = 'border:2px solid #ef4444;background:#fff5f5;';
+    else if (isTransfer) cardStyle = 'border:2px solid #f97316;background:#fff7ed;'; // オレンジ（振替）
+    else if (!hasRec) cardStyle = 'border:2px solid #ef4444;background:#fff5f5;';
+    else cardStyle = 'border:2px solid #3b82f6;background:#eff6ff;';
+
     const absentBtnStyle = absent
       ? 'background:#ef4444;color:white;border:none;'
       : 'background:#fee2e2;color:#ef4444;border:1px solid #fca5a5;';
 
+    const statusBadge = absent
+      ? '<span style="font-size:11px;color:#ef4444;font-weight:700;margin-left:6px">欠席</span>'
+      : isTransfer
+      ? `<span style="font-size:11px;color:#f97316;font-weight:700;margin-left:6px">🔄 振替${transferInfo?.fromDate ? '（'+new Date(transferInfo.fromDate+'T00:00:00').toLocaleDateString('ja-JP',{month:'2-digit',day:'2-digit'})+'から）' : ''}</span>`
+      : !hasRec
+      ? '<span style="font-size:11px;color:#ef4444;font-weight:700;margin-left:6px">未記入</span>'
+      : '<span style="font-size:11px;color:#3b82f6;font-weight:700;margin-left:6px">記入済</span>';
+
     html += `<div class="card" style="${cardStyle}margin-bottom:10px">
       <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
-        <span>${absent ? '🔴 ' : ''}${name}<span style="font-size:11px;color:var(--gray-3);font-weight:400;margin-left:6px">${s?.grade||''} ${s?.school||''}</span></span>
-        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-          <button onclick="goToInstrInput('${encodeURIComponent(name)}')" style="background:var(--green);color:white;border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">📝 記入</button>
-          <button onclick="toggleAbsence('${dateKey}','${safeName}')" style="${absentBtnStyle}padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">
-            ${absent ? '✓ 欠席' : '欠席'}
-          </button>
-          <button class="print-btn" style="width:auto;padding:6px 12px;font-size:12px;margin:0" onclick="printStudent('${safeId}')">🖨️ 印刷</button>
+        <span>${absent?'🔴 ':isTransfer?'🔄 ':''}${name}${statusBadge}<span style="font-size:11px;color:var(--gray-3);font-weight:400;margin-left:6px">${s?.grade||''} ${s?.school||''}</span></span>
+        <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+          <button onclick="toggleAbsence('${dateKey}','${safeName}')" style="${absentBtnStyle}padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">${absent ? '✓ 欠席' : '欠席'}</button>
+          ${isTransfer
+            ? `<button onclick="removeTransfer('${dateKey}','${safeName}')" style="background:#fed7aa;color:#c2410c;border:1px solid #fdba74;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">振替解除</button>`
+            : `<button onclick="openTransferModal('${dateKey}','${safeName}')" style="background:#fed7aa;color:#c2410c;border:1px solid #fdba74;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">🔄 振替</button>`
+          }
+          <button class="print-btn" style="width:auto;padding:5px 10px;font-size:11px;margin:0" onclick="printStudent('${safeId}')">🖨️</button>
         </div>
       </div>`;
 
@@ -1170,16 +1195,20 @@ function renderToday() {
       html += `<div style="margin-bottom:8px;display:flex;align-items:flex-start;gap:6px;flex-wrap:wrap">
         <span class="hist-subj subj-${r.subject}">${r.subject}</span>
         <div style="flex:1">
-          <div style="font-size:13px">${r.hasTest||r.has_test ? '【テスト】'+(r.testContent||r.test_content||'')+'　→　' : ''}${r.instruction||''}${r.memo ? '　📝'+r.memo : ''}</div>
-          ${r.homework ? `<div style="font-size:12px;color:#9d174d;margin-top:2px">📚 ${r.homework}</div>` : ''}
+          <div style="font-size:13px">${r.hasTest||r.has_test?'【テスト】'+(r.testContent||r.test_content||'')+'　→　':''}${r.instruction||''}${r.memo?'　📝'+r.memo:''}</div>
+          ${r.homework?`<div style="font-size:12px;color:#9d174d;margin-top:2px">📚 ${r.homework}</div>`:''}
         </div>
         <button onclick="openRecordEditById(${r.id})" style="background:var(--gray-1);border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;flex-shrink:0">✏️</button>
+        <button onclick="copyRecord(${r.id})" style="background:#e0f2fe;color:#0369a1;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0">📋 コピー</button>
       </div>`;
     });
 
+    if (!absent && !hasRec) {
+      html += `<div style="font-size:12px;color:#ef4444;padding:4px 0">まだ指示が入力されていません</div>`;
+    }
+
     html += '</div>';
   });
-
   el.innerHTML = html;
 }
 
@@ -2168,14 +2197,18 @@ function openPrintTab() {
   const content = document.getElementById('pdf-preview-content');
   if (!content) return;
   const inner = content.innerHTML;
-  const printHtml = '<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8">'
-    + '<meta name="viewport" content="width=device-width,initial-scale=1.0">'
-    + '<title>学習レポート</title>'
-    + '<style>body{font-family:"Hiragino Sans","Meiryo",sans-serif;margin:16px;background:white;}'
-    + 'table{border-collapse:collapse;width:100%;}'
-    + 'th,td{border:1px solid #ccc;padding:4px 6px;font-size:11px;}'
-    + '@media print{body{margin:0;}}</style></head><body>' + inner + '</body></html>';
-  const blob = new Blob([printHtml], {type:'text/html'});
+  const parts = [
+    '<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8">',
+    '<meta name="viewport" content="width=device-width,initial-scale=1.0">',
+    '<title>学習レポート</title>',
+    '<style>body{font-family:sans-serif;margin:16px;background:white;}',
+    'table{border-collapse:collapse;width:100%;}',
+    'th,td{border:1px solid #ccc;padding:4px 6px;font-size:11px;}',
+    '</style></head><body>',
+    inner,
+    '</body></html>'
+  ];
+  const blob = new Blob([parts.join('')], {type:'text/html'});
   const url = URL.createObjectURL(blob);
   window.open(url, '_blank');
 }
@@ -2389,6 +2422,102 @@ function goToInstrInput(encodedName) {
   setTimeout(() => {
     selectStudent(s.id);
   }, 100);
+}
+
+// ===== 振替管理 =====
+function getTransfers() {
+  try { return JSON.parse(localStorage.getItem('midori_transfers')||'{}'); } catch(e) { return {}; }
+}
+function saveTransfers(d) { localStorage.setItem('midori_transfers', JSON.stringify(d)); }
+
+let _transferTarget = null; // {dateKey, studentName}
+
+function openTransferModal(dateKey, studentName) {
+  _transferTarget = {dateKey, studentName};
+  document.getElementById('transfer-student-name').textContent = studentName + ' の振替日を選択';
+  // デフォルトは明日
+  const d = new Date(dateKey + 'T00:00:00');
+  d.setDate(d.getDate() + 1);
+  document.getElementById('transfer-date').value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  document.getElementById('transfer-modal').classList.add('open');
+}
+
+function closeTransferModal() {
+  document.getElementById('transfer-modal').classList.remove('open');
+  _transferTarget = null;
+}
+
+function setTransferDate(days) {
+  const base = _transferTarget?.dateKey || getTodayKey();
+  const d = new Date(base + 'T00:00:00');
+  d.setDate(d.getDate() + days);
+  document.getElementById('transfer-date').value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function confirmTransfer() {
+  if (!_transferTarget) return;
+  const toDate = document.getElementById('transfer-date').value;
+  if (!toDate) { showToast('⚠️ 振替日を選択してください'); return; }
+  const transfers = getTransfers();
+  if (!transfers[toDate]) transfers[toDate] = [];
+  // 重複チェック
+  if (!transfers[toDate].find(t => t.name === _transferTarget.studentName)) {
+    transfers[toDate].push({name: _transferTarget.studentName, fromDate: _transferTarget.dateKey});
+  }
+  saveTransfers(transfers);
+  closeTransferModal();
+  const toDisp = new Date(toDate+'T00:00:00').toLocaleDateString('ja-JP',{month:'2-digit',day:'2-digit',weekday:'short'});
+  showToast(`🔄 ${_transferTarget.studentName} → ${toDisp} に振替登録`);
+  renderToday();
+}
+
+function getTransfersForDate(dateKey) {
+  const transfers = getTransfers();
+  return (transfers[dateKey] || []);
+}
+
+function removeTransfer(dateKey, studentName) {
+  const transfers = getTransfers();
+  if (transfers[dateKey]) {
+    transfers[dateKey] = transfers[dateKey].filter(t => t.name !== studentName);
+    if (!transfers[dateKey].length) delete transfers[dateKey];
+    saveTransfers(transfers);
+  }
+  renderToday();
+}
+
+// ===== コピー＆ペースト =====
+let _copiedRecord = null;
+
+function copyRecord(id) {
+  const rec = (_records||[]).find(r => String(r.id) === String(id));
+  if (!rec) return;
+  _copiedRecord = {...rec};
+  showToast('📋 コピーしました：' + rec.subject + ' ' + (rec.instruction||'').slice(0,20));
+}
+
+function pasteRecord() {
+  if (!_copiedRecord) { showToast('⚠️ コピーされた内容がありません'); return; }
+  if (!currentStudent) { showToast('⚠️ 生徒を選択してください'); return; }
+  // 科目を選択状態にして内容を貼り付け
+  const subj = _copiedRecord.subject || '';
+  // 科目ボタンを探してトグル
+  document.querySelectorAll('.subj-multi-btn').forEach(btn => {
+    if (btn.textContent.trim() === subj) {
+      if (!selectedSubjects.includes(subj)) {
+        toggleSubject(subj, btn);
+      }
+    }
+  });
+  // 内容を貼り付け（最初の科目エリアに）
+  const n = selectedSubjects.indexOf(subj) + 1 || 1;
+  const instrEl = document.getElementById('instr-text-' + n);
+  const hwEl = document.getElementById('homework-text-' + n);
+  const memoEl = document.getElementById('memo-text-' + n);
+  if (instrEl) instrEl.value = _copiedRecord.instruction || '';
+  if (hwEl) hwEl.value = _copiedRecord.homework || '';
+  if (memoEl) memoEl.value = _copiedRecord.memo || '';
+  showToast('📋 貼り付けました');
 }
 // INIT
 async function initApp() {
@@ -2927,5 +3056,28 @@ ALTER TABLE progress ADD COLUMN IF NOT EXISTS data_json text;
 ALTER TABLE master_custom ADD COLUMN IF NOT EXISTS tb_key text PRIMARY KEY;
 ALTER TABLE master_custom ADD COLUMN IF NOT EXISTS data_json text;
 -->
+
+<!-- MODAL: 振替 -->
+<div class="modal-overlay" id="transfer-modal">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-title">🔄 振替日を設定</div>
+    <div style="font-size:13px;color:var(--text-sub);margin-bottom:12px" id="transfer-student-name"></div>
+    <div class="modal-row">
+      <div class="modal-label">振替日</div>
+      <input type="date" id="transfer-date" style="width:100%;padding:10px 12px;border-radius:8px;border:2px solid var(--gray-2);font-size:14px">
+    </div>
+    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+      <button class="pattern-btn" onclick="setTransferDate(1)">明日</button>
+      <button class="pattern-btn" onclick="setTransferDate(2)">明後日</button>
+      <button class="pattern-btn" onclick="setTransferDate(3)">3日後</button>
+      <button class="pattern-btn" onclick="setTransferDate(7)">1週間後</button>
+    </div>
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn-secondary" onclick="closeTransferModal()">キャンセル</button>
+      <button class="btn-primary" onclick="confirmTransfer()">✅ 振替を登録</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
