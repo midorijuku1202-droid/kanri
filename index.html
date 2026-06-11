@@ -2634,16 +2634,10 @@ async function addTextbook() {
   const items=getMasterItems(tbKey);
   ps[pimAddSid].textbooks.push({name:tbName,grade,key:tbKey});
   ps[pimAddSid].data[tbKey]=items.map(item=>{return {step:item.step,title:item.title,page:item.page,date:'',date2:'',ct:'',review:'',retest:'',precheck:'',testRangeStart:false,testRangeEnd:false};});
-  try {
-    await savePS(ps);
-  } catch(savePsErr) {
-    showToast('⚠️ savePS例外: ' + savePsErr.message);
-    return;
-  }
+  // _ps を直接更新してからSupabaseに保存
+  _ps = ps;
+  await savePS(ps);
   window._lastSaveTime = Date.now();
-  const checkPs = getPS();
-  const checkTbs = (checkPs[pimAddSid]||{}).textbooks||[];
-  showToast('保存後 textbooks数='+checkTbs.length+' sid='+pimAddSid);
   closeAddTextbookModal();
   renderProgressList(document.getElementById('prog-search').value);
   showToast('✅ '+tbName+'（'+grade+'）を追加しました');
