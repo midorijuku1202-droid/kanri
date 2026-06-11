@@ -802,12 +802,15 @@ async function loadPS() {
     });
   } catch(e) { console.error('loadPS error:', e); _ps = {}; }
 }
-async function savePS(data) {
+async function savePS(data, changedSids=null) {
   _ps = data;
-  // バックグラウンドでSupabaseに保存（エラーでも無視）
+  // 変更したsidだけ保存（指定がなければ全部）
+  const sids = changedSids || Object.keys(data);
   setTimeout(async () => {
     try {
-      for (const [sid, val] of Object.entries(data)) {
+      for (const sid of sids) {
+        const val = data[sid];
+        if (!val) continue;
         const dataJson = JSON.stringify(val);
         const chkRes = await fetch(SB_URL+'/rest/v1/progress?student_id=eq.'+encodeURIComponent(sid)+'&select=student_id', {
           mode:'cors', credentials:'omit',
@@ -2611,7 +2614,7 @@ async function addTextbook() {
   ps[pimAddSid].data[tbKey]=items.map(item=>{return {step:item.step,title:item.title,page:item.page,date:'',date2:'',ct:'',review:'',retest:'',precheck:'',testRangeStart:false,testRangeEnd:false};});
   // _ps を直接更新してからSupabaseに保存（awaitしない）
   _ps = ps;
-  savePS(ps); // バックグラウンドで保存
+  savePS(ps, [pimAddSid]); // 変更した生徒だけ保存
   window._lastSaveTime = Date.now();
   closeAddTextbookModal();
   renderProgressList(document.getElementById('prog-search').value);
@@ -2622,7 +2625,7 @@ async function removeTextbook(sid,key) {
   if (!ps[sid]) return;
   ps[sid].textbooks=ps[sid].textbooks.filter(t=>t.key!==key);
   delete ps[sid].data[key];
-  await savePS(ps);
+  await savePS(ps, [sid]); // 変更した生徒だけ保存
   renderProgressList(document.getElementById('prog-search').value);
   showToast('🗑️ 削除しました');
 }
@@ -2806,12 +2809,12 @@ async function savePim() {
         });
       }
     });
-    await savePS(allPs);
+    await savePS(allPs, Object.keys(allPs)); // マスター変更時は全員
     pimRows=allPs[pimSid]?.data[pimKey]||pimRows;
     showToast('✅ マスターを保存・全生徒に反映しました');
   } else {
     ps[pimSid].data[pimKey]=pimRows;
-    await savePS(ps);
+    await savePS(ps, [pimSid]); // 変更した生徒だけ保存
     showToast('✅ 進捗を保存しました');
   }
   renderProgressList(document.getElementById('prog-search').value);
