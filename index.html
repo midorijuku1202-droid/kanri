@@ -2529,7 +2529,7 @@ let pimMode = 'input'; // 'input' | 'master'
 let pimRows = [];
 
 function getPS() { try { return JSON.parse(localStorage.getItem('midori_ps2')||'{}'); } catch(e) { return {}; } }
-function savePS(d) { localStorage.setItem('midori_ps2', JSON.stringify(d)); }
+// savePS: Supabase版を使用
 function getCustomMaster() { try { return JSON.parse(localStorage.getItem('midori_cm')||'{}'); } catch(e) { return {}; } }
 function saveCustomMaster(d) { localStorage.setItem('midori_cm', JSON.stringify(d)); }
 function getMasterItems(key) { const cm = getCustomMaster(); return cm[key] ? cm[key] : (TEXTBOOKS[key]||[]); }
