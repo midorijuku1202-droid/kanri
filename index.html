@@ -828,9 +828,10 @@ async function savePS(data) {
           headers, body: JSON.stringify({student_id: sid, data_json: dataJson})
         });
       }
+      const resTxt = await res.text();
+      alert((exists?'PATCH':'POST') + ' status=' + res.status + ' body=' + resTxt.slice(0,100));
       if (!res.ok) {
-        const txt = await res.text();
-        showToast('⚠️ progress保存エラー: ' + res.status + ' ' + txt.slice(0,80));
+        showToast('⚠️ progress保存エラー: ' + res.status + ' ' + resTxt.slice(0,80));
         return;
       }
     }
