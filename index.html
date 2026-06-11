@@ -664,7 +664,7 @@ async function saveStudents(list) {
   _students = list;
   try {
     await fetch(SB_URL+'/rest/v1/students?on_conflict=id', {
-      method:'POST',
+      method:'POST', mode:'cors', credentials:'omit',
       headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
       body: JSON.stringify(list)
     });
@@ -776,8 +776,8 @@ async function updateOneRecord(id, data) {
 function getPS() { return _ps || {}; }
 async function loadPS() {
   try {
-    const url = SB_URL + '/rest/v1/progress?select=*';
-    const res = await fetch(url, {
+    const res = await fetch(SB_URL+'/rest/v1/progress?select=*', {
+      mode:'cors', credentials:'omit',
       headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
     });
     if (!res.ok) { _ps = {}; return; }
@@ -788,36 +788,32 @@ async function loadPS() {
 }
 async function savePS(data) {
   _ps = data;
+  const headers = {
+    'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY,
+    'Content-Type': 'application/json', 'Prefer': 'return=minimal'
+  };
+  const fetchOpts = { mode: 'cors', credentials: 'omit' };
   try {
-    const upserts = Object.entries(data).map(([sid,val])=>({student_id:sid, data_json:JSON.stringify(val)}));
-    if (!upserts.length) return;
-    // 1件ずつ個別にupsert
-    for (const upsert of upserts) {
-      // まず既存レコードを確認
-      const chkRes = await fetch(SB_URL+'/rest/v1/progress?student_id=eq.'+encodeURIComponent(upsert.student_id)+'&select=student_id', {
-        headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
+    for (const [sid, val] of Object.entries(data)) {
+      const dataJson = JSON.stringify(val);
+      // 存在確認
+      const chkRes = await fetch(SB_URL+'/rest/v1/progress?student_id=eq.'+encodeURIComponent(sid)+'&select=student_id', {
+        ...fetchOpts, headers: {'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
       });
       const exists = chkRes.ok ? (await chkRes.json()).length > 0 : false;
-      
       let res;
       if (exists) {
-        // UPDATE
-        res = await fetch(SB_URL+'/rest/v1/progress?student_id=eq.'+encodeURIComponent(upsert.student_id), {
-          method:'PATCH',
-          headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
-          body: JSON.stringify({data_json: upsert.data_json})
+        res = await fetch(SB_URL+'/rest/v1/progress?student_id=eq.'+encodeURIComponent(sid), {
+          ...fetchOpts, method:'PATCH', headers, body: JSON.stringify({data_json: dataJson})
         });
       } else {
-        // INSERT
         res = await fetch(SB_URL+'/rest/v1/progress', {
-          method:'POST',
-          headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
-          body: JSON.stringify(upsert)
+          ...fetchOpts, method:'POST', headers, body: JSON.stringify({student_id: sid, data_json: dataJson})
         });
       }
       if (!res.ok) {
         const txt = await res.text();
-        showToast('⚠️ 進捗保存エラー: ' + res.status + ' ' + txt.slice(0,80));
+        showToast('⚠️ 進捗保存エラー: ' + res.status + ' ' + txt.slice(0,60));
         return;
       }
     }
@@ -2386,6 +2382,7 @@ function goToInstrInput(encodedName) {
 async function initApp() {
   showLoadingOverlay('データを読み込み中...');
   try {
+
     // 各ロードを個別に実行してエラーがあっても続行
     try { await loadStudents(); } catch(e) { console.error('loadStudents:', e); }
     try { await loadRecords(); } catch(e) { console.error('loadRecords:', e); }
