@@ -783,7 +783,23 @@ async function loadPS() {
     if (!res.ok) { _ps = {}; return; }
     const rows = await res.json();
     _ps = {};
-    (rows||[]).forEach(r=>{ try { _ps[r.student_id]=JSON.parse(r.data_json||'{}'); } catch(e){} });
+    (rows||[]).forEach(r=>{
+      try {
+        const d = JSON.parse(r.data_json||'{}');
+        // textbooks の key を正規化（例: 'フォレスタ英語_中１' → TB_MENUから正しいkeyを取得）
+        if (d.textbooks) {
+          d.textbooks = d.textbooks.map(tb => {
+            const correctKey = TB_MENU[tb.name] ? (TB_MENU[tb.name][tb.grade] || tb.key) : tb.key;
+            if (tb.key !== correctKey && d.data && d.data[tb.key]) {
+              d.data[correctKey] = d.data[tb.key];
+              delete d.data[tb.key];
+            }
+            return {...tb, key: correctKey};
+          });
+        }
+        _ps[r.student_id] = d;
+      } catch(e) {}
+    });
   } catch(e) { console.error('loadPS error:', e); _ps = {}; }
 }
 async function savePS(data) {
@@ -2619,8 +2635,8 @@ async function addTextbook() {
   if (existing){showToast('⚠️ すでに追加されています');return;}
   const items=getMasterItems(tbKey);
   alert('items数=' + (items?items.length:'null'));
-  ps[pimAddSid].textbooks.push({name:tbName,grade,key});
-  ps[pimAddSid].data[key]=items.map(item=>{return {step:item.step,title:item.title,page:item.page,date:'',ct:'',review:'',retest:'',precheck:'',testRangeStart:false,testRangeEnd:false};});
+  ps[pimAddSid].textbooks.push({name:tbName,grade,key:tbKey});
+  ps[pimAddSid].data[tbKey]=items.map(item=>{return {step:item.step,title:item.title,page:item.page,date:'',date2:'',ct:'',review:'',retest:'',precheck:'',testRangeStart:false,testRangeEnd:false};});
   alert('savePS直前 ps keys=' + Object.keys(ps).length);
   await savePS(ps);
   closeAddTextbookModal();
