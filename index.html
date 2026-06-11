@@ -793,7 +793,9 @@ async function savePS(data) {
     'Content-Type': 'application/json', 'Prefer': 'return=minimal'
   };
   try {
-    for (const [sid, val] of Object.entries(data)) {
+    const entries = Object.entries(data);
+    alert('savePS実行: ' + entries.length + '件\n最初のsid: ' + (entries[0]?.[0]||'なし'));
+    for (const [sid, val] of entries) {
       const dataJson = JSON.stringify(val);
       // 存在確認
       const chkRes = await fetch(SB_URL+'/rest/v1/progress?student_id=eq.'+encodeURIComponent(sid)+'&select=student_id', {
@@ -2593,17 +2595,20 @@ function updateGradeOptions() {
   });
 }
 async function addTextbook() {
+  alert('addTextbook呼び出し pimAddSid=' + pimAddSid);
   const tbName=document.getElementById('atb-textbook').value;
   const grade=document.getElementById('atb-grade').value;
   if (!tbName||!grade){showToast('⚠️ 教材と学年を選択してください');return;}
   const tbKey=TB_MENU[tbName][grade];
   const key=tbName+'_'+grade;
   const ps=getPS();
+  alert('ps keys=' + Object.keys(ps).length + ' tbKey=' + tbKey + ' key=' + key);
   if (!ps[pimAddSid]) ps[pimAddSid]={textbooks:[],data:{}};
   if (ps[pimAddSid].textbooks.find(t=>t.key===key)){showToast('⚠️ すでに追加されています');return;}
   const items=getMasterItems(tbKey);
   ps[pimAddSid].textbooks.push({name:tbName,grade,key});
   ps[pimAddSid].data[key]=items.map(item=>{return {step:item.step,title:item.title,page:item.page,date:'',ct:'',review:'',retest:'',precheck:'',testRangeStart:false,testRangeEnd:false};});
+  showToast('savePS呼び出し中... sid='+pimAddSid+' keys='+Object.keys(ps).length);
   await savePS(ps);
   closeAddTextbookModal();
   renderProgressList(document.getElementById('prog-search').value);
