@@ -184,7 +184,6 @@ const sb = {
 
 <div class="tabs">
   <button class="tab-btn active" onclick="switchTab('input')">📝 指示入力</button>
-  <button class="tab-btn" onclick="switchTab('history')">📋 履歴</button>
   <button class="tab-btn" onclick="switchTab('today')">📅 本日</button>
   <button class="tab-btn" onclick="switchTab('settings')">⚙️ 生徒管理</button>
   <button class="tab-btn" onclick="switchTab('progress')">📊 進捗表</button>
@@ -206,141 +205,37 @@ const sb = {
   </div>
 
   <div id="instruction-panel" style="display:none">
-    <div class="selected-student-header">
-      <div>
-        <div class="s-name" id="sel-name"></div>
-        <div class="s-info" id="sel-info"></div>
-      </div>
-      <button class="back-btn" onclick="openStudentProgress()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35);margin-right:6px">📊 進行表</button>
-      <button class="back-btn" onclick="pasteRecord()" id="paste-btn" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35);margin-right:6px">📋 貼り付け</button>
-      <button class="back-btn" onclick="backToList()">← 戻る</button>
+  <!-- ヘッダー -->
+  <div class="selected-student-header">
+    <div>
+      <div class="s-name" id="sel-name"></div>
+      <div class="s-info" id="sel-info"></div>
     </div>
+    <button class="back-btn" onclick="openStudentProgress()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35);margin-right:6px">📊 進行表</button>
+    <button class="back-btn" onclick="backToList()">← 戻る</button>
+  </div>
 
-    <div class="card" style="padding:12px 16px">
-      <div class="card-title" style="margin-bottom:8px">科目を選択（最大2科目）</div>
-      <div id="subject-tabs-multi" style="display:flex;gap:6px;flex-wrap:wrap">
-        <button class="subj-multi-btn" onclick="toggleSubject('英語',this)" style="padding:7px 14px;border-radius:20px;border:2px solid var(--gray-2);background:white;font-size:13px;font-weight:600;color:var(--text-sub);cursor:pointer">英語</button>
-        <button class="subj-multi-btn" onclick="toggleSubject('数学',this)" style="padding:7px 14px;border-radius:20px;border:2px solid var(--gray-2);background:white;font-size:13px;font-weight:600;color:var(--text-sub);cursor:pointer">数学</button>
-        <button class="subj-multi-btn" onclick="toggleSubject('理科',this)" style="padding:7px 14px;border-radius:20px;border:2px solid var(--gray-2);background:white;font-size:13px;font-weight:600;color:var(--text-sub);cursor:pointer">理科</button>
-        <button class="subj-multi-btn" onclick="toggleSubject('地理',this)" style="padding:7px 14px;border-radius:20px;border:2px solid var(--gray-2);background:white;font-size:13px;font-weight:600;color:var(--text-sub);cursor:pointer">地理</button>
-        <button class="subj-multi-btn" onclick="toggleSubject('歴史',this)" style="padding:7px 14px;border-radius:20px;border:2px solid var(--gray-2);background:white;font-size:13px;font-weight:600;color:var(--text-sub);cursor:pointer">歴史</button>
-        <button class="subj-multi-btn" onclick="toggleSubject('公民',this)" style="padding:7px 14px;border-radius:20px;border:2px solid var(--gray-2);background:white;font-size:13px;font-weight:600;color:var(--text-sub);cursor:pointer">公民</button>
-      </div>
+  <!-- 16コマ計画シート -->
+  <div class="card" style="padding:0;overflow:hidden">
+    <div style="background:var(--green-pale);padding:10px 16px;font-size:13px;font-weight:700;color:var(--green);display:flex;align-items:center;justify-content:space-between">
+      <span>📋 学習計画シート（16コマ）</span>
+      <button onclick="savePlan()" style="background:var(--green);color:white;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer">✅ 保存</button>
     </div>
-
-    <!-- 科目1入力エリア -->
-    <div class="card" id="subj-card-1" style="display:none">
-      <div class="card-title" id="subj-card-1-title" style="color:var(--green)">📝 科目1</div>
-      <div class="instr-row">
-        <div class="instr-label">テスト</div>
-        <div style="flex:1">
-          <button class="toggle-btn" id="test-toggle-1" onclick="toggleTest(1)">なし</button>
-          <input type="text" id="test-content-1" placeholder="テスト内容（例：U5-1）" style="margin-top:8px;display:none">
-        </div>
-      </div>
-      <div class="instr-row" style="margin-top:10px">
-        <div class="instr-label">実施</div>
-        <div style="flex:1">
-          <div class="quick-patterns">
-            <button class="pattern-btn" onclick="appendPattern('フォレスタ',1)">フォレスタ</button>
-            <button class="pattern-btn" onclick="appendPattern('iワーク＋',1)">iワーク＋</button>
-            <button class="pattern-btn" onclick="appendPattern('iワーク',1)">iワーク</button>
-            <button class="pattern-btn" onclick="appendPattern('Sirius',1)">Sirius</button>
-            <button class="pattern-btn" onclick="appendPattern('学校ワーク',1)">学校ワーク</button>
-            <button class="pattern-btn" onclick="appendPattern('フォレスタ英単語',1)">フォレスタ英単語</button>
-            <button class="pattern-btn" onclick="appendPattern('フォレスタステップ',1)">フォレスタステップ</button>
-          </div>
-          <textarea id="instr-text-1" placeholder="実施内容を入力" rows="2"></textarea>
-        </div>
-      </div>
-      <div class="instr-row" style="margin-top:8px">
-        <div class="instr-label">宿題</div>
-        <div style="flex:1">
-          <div class="quick-patterns">
-            <button class="pattern-btn" onclick="appendHomework('フォレスタ',1)">フォレスタ</button>
-            <button class="pattern-btn" onclick="appendHomework('iワーク＋',1)">iワーク＋</button>
-            <button class="pattern-btn" onclick="appendHomework('iワーク',1)">iワーク</button>
-            <button class="pattern-btn" onclick="appendHomework('Sirius',1)">Sirius</button>
-            <button class="pattern-btn" onclick="appendHomework('学校ワーク',1)">学校ワーク</button>
-            <button class="pattern-btn" onclick="appendHomework('フォレスタ英単語',1)">フォレスタ英単語</button>
-            <button class="pattern-btn" onclick="appendHomework('フォレスタステップ',1)">フォレスタステップ</button>
-          </div>
-          <textarea id="homework-text-1" placeholder="宿題内容を入力（任意）" rows="2"></textarea>
-        </div>
-      </div>
-      <div class="instr-row" style="margin-top:8px">
-        <div class="instr-label">メモ</div>
-        <input type="text" id="memo-text-1" placeholder="講師メモ（任意）">
-      </div>
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+      <table id="plan-table" style="width:100%;border-collapse:collapse;min-width:580px;font-size:12px">
+        <thead id="plan-thead">
+          <tr style="background:#f5f5f5">
+            <th style="padding:7px 6px;border-bottom:2px solid var(--green-mid);width:40px;text-align:center">実施済</th>
+            <th style="padding:7px 6px;border-bottom:2px solid var(--green-mid);width:70px;text-align:center">日付</th>
+            <th style="padding:7px 6px;border-bottom:2px solid var(--green-mid);width:60px;text-align:center">科目</th>
+            <th style="padding:7px 6px;border-bottom:2px solid var(--green-mid);text-align:left">実施内容</th>
+            <th style="padding:7px 6px;border-bottom:2px solid var(--green-mid);text-align:left">宿題</th>
+            <th style="padding:7px 6px;border-bottom:2px solid var(--green-mid);text-align:left;width:100px">メモ</th>
+          </tr>
+        </thead>
+        <tbody id="plan-tbody"></tbody>
+      </table>
     </div>
-
-    <!-- 科目2入力エリア -->
-    <div class="card" id="subj-card-2" style="display:none">
-      <div class="card-title" id="subj-card-2-title" style="color:var(--green)">📝 科目2</div>
-      <div class="instr-row">
-        <div class="instr-label">テスト</div>
-        <div style="flex:1">
-          <button class="toggle-btn" id="test-toggle-2" onclick="toggleTest(2)">なし</button>
-          <input type="text" id="test-content-2" placeholder="テスト内容（例：U5-1）" style="margin-top:8px;display:none">
-        </div>
-      </div>
-      <div class="instr-row" style="margin-top:10px">
-        <div class="instr-label">実施</div>
-        <div style="flex:1">
-          <div class="quick-patterns">
-            <button class="pattern-btn" onclick="appendPattern('フォレスタ',2)">フォレスタ</button>
-            <button class="pattern-btn" onclick="appendPattern('iワーク＋',2)">iワーク＋</button>
-            <button class="pattern-btn" onclick="appendPattern('iワーク',2)">iワーク</button>
-            <button class="pattern-btn" onclick="appendPattern('Sirius',2)">Sirius</button>
-            <button class="pattern-btn" onclick="appendPattern('学校ワーク',2)">学校ワーク</button>
-            <button class="pattern-btn" onclick="appendPattern('フォレスタ英単語',2)">フォレスタ英単語</button>
-            <button class="pattern-btn" onclick="appendPattern('フォレスタステップ',2)">フォレスタステップ</button>
-          </div>
-          <textarea id="instr-text-2" placeholder="実施内容を入力" rows="2"></textarea>
-        </div>
-      </div>
-      <div class="instr-row" style="margin-top:8px">
-        <div class="instr-label">宿題</div>
-        <div style="flex:1">
-          <div class="quick-patterns">
-            <button class="pattern-btn" onclick="appendHomework('フォレスタ',2)">フォレスタ</button>
-            <button class="pattern-btn" onclick="appendHomework('iワーク＋',2)">iワーク＋</button>
-            <button class="pattern-btn" onclick="appendHomework('iワーク',2)">iワーク</button>
-            <button class="pattern-btn" onclick="appendHomework('Sirius',2)">Sirius</button>
-            <button class="pattern-btn" onclick="appendHomework('学校ワーク',2)">学校ワーク</button>
-            <button class="pattern-btn" onclick="appendHomework('フォレスタ英単語',2)">フォレスタ英単語</button>
-            <button class="pattern-btn" onclick="appendHomework('フォレスタステップ',2)">フォレスタステップ</button>
-          </div>
-          <textarea id="homework-text-2" placeholder="宿題内容を入力（任意）" rows="2"></textarea>
-        </div>
-      </div>
-      <div class="instr-row" style="margin-top:8px">
-        <div class="instr-label">メモ</div>
-        <input type="text" id="memo-text-2" placeholder="講師メモ（任意）">
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">📖 直近の履歴</div>
-      <div id="recent-hist"></div>
-    </div>
-
-    <div class="card" style="padding:12px 16px">
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <div style="flex:1;min-width:160px">
-          <div style="font-size:11px;font-weight:700;color:var(--text-sub);margin-bottom:4px">📅 日付指定（空欄=今日）</div>
-          <input type="date" id="instr-date" style="width:100%;padding:8px 10px;border-radius:8px;border:2px solid var(--gray-2);font-size:13px;outline:none">
-        </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;padding-top:16px">
-          <button class="pattern-btn" onclick="setInstrDate(0)">今日</button>
-          <button class="pattern-btn" onclick="setInstrDate(1)">明日</button>
-          <button class="pattern-btn" onclick="setInstrDate(2)">明後日</button>
-          <button class="pattern-btn" onclick="setInstrDate(3)">3日後</button>
-          <button class="pattern-btn" onclick="setInstrDate(7)">1週間後</button>
-        </div>
-      </div>
-    </div>
-    <button class="save-btn" onclick="saveInstruction()">✅ 保存する</button>
   </div>
 </div>
 
@@ -908,25 +803,7 @@ function renderStudents(q='') {
   }).join('')||'<div class="empty-state"><div class="icon">🔍</div>該当する生徒がいません</div>';
 }
 
-function selectStudent(id) {
-  const students = getStudents();
-  currentStudent = students.find(s=>s.id===id);
-  document.getElementById('sel-name').textContent = currentStudent.name;
-  document.getElementById('sel-info').textContent = `${currentStudent.grade} · ${currentStudent.school||''}`;
-  document.getElementById('student-select-panel').style.display='none';
-  document.getElementById('instruction-panel').style.display='block';
-  currentSubject='英語';
-  document.querySelectorAll('.subj-btn').forEach((b,i)=>b.classList.toggle('active',i===0));
-  testEnabled=false;
-  document.getElementById('test-toggle').textContent='なし';
-  document.getElementById('test-toggle').classList.remove('on');
-  document.getElementById('test-content').style.display='none';
-  document.getElementById('test-content').value='';
-  document.getElementById('instr-text').value='';
-  document.getElementById('homework-text').value='';
-  document.getElementById('memo-text').value='';
-  renderRecentHist();
-}
+
 
 function backToList() {
   document.getElementById('student-select-panel').style.display='block';
@@ -1109,6 +986,16 @@ function renderToday() {
   const scheduledStudents = students.filter(s => (sched[s.id]||[]).includes(dow));
   const scheduledNames = scheduledStudents.map(s => s.name);
   const recordedNames = [...new Set(todayRecs.map(r => r.studentName))];
+  // 計画シートベースの記入済判定
+  const ps = getPS();
+  function hasActivePlan(name) {
+    const s = students.find(st => st.name === name);
+    if (!s) return false;
+    const plan = (ps[s.id]||{}).plan||[];
+    const hasEntry = plan.some(r => r.subject || r.instruction);
+    const allDone = hasEntry && plan.filter(r=>r.subject||r.instruction).every(r=>r.done);
+    return hasEntry && !allDone; // 入力済みでかつ未実施があれば記入済
+  }
   const allNames = [...new Set([...absentNames, ...transferNames, ...scheduledNames, ...recordedNames])];
 
   document.getElementById('today-count').textContent = todayRecs.length;
@@ -1345,16 +1232,16 @@ function switchTab(tab) {
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('view-'+tab).classList.add('active');
-  const _ti=['input','history','today','settings','progress','share'].indexOf(tab);
+  const _ti=['input','today','settings','progress','share'].indexOf(tab);
   const _tb=document.querySelectorAll('.tab-btn');
   if(_ti>=0&&_tb[_ti])_tb[_ti].classList.add('active');
-  const now = Date.now();
-  const skipReload = (now - (window._lastSaveTime||0)) < 4000;
-  if(tab==='history'){
-    if(!skipReload){ loadRecords().then(()=>renderHistory()); } else { renderHistory(); }
-  }
   if(tab==='today'){
-    if(!skipReload){ loadRecords().then(()=>renderToday()); } else { renderToday(); }
+    const sinceLastSave = Date.now() - (window._lastSaveTime||0);
+    if (sinceLastSave > 3000) {
+      Promise.all([loadRecords(), loadPS()]).then(()=>renderToday());
+    } else {
+      renderToday();
+    }
   }
   if(tab==='settings'){ loadStudents().then(()=>renderSettingsList()); }
   if(tab==='progress'){ renderProgressList(); }
@@ -2395,6 +2282,107 @@ function pasteRecord() {
   if (hwEl) hwEl.value = _copiedRecord.homework || '';
   if (memoEl) memoEl.value = _copiedRecord.memo || '';
   showToast('📋 貼り付けました');
+}
+
+// ===== 計画シート =====
+const PLAN_SLOTS = 16;
+const PLAN_SUBJECTS = ['', '英語', '数学', '理科', '地理', '歴史', '公民', '国語'];
+const PLAN_INSTR_TEMPLATES = ['', 'フォレスタ', 'iワーク＋', 'iワーク', 'Sirius', '学校ワーク', 'フォレスタ英単語', 'フォレスタステップ'];
+const PLAN_HW_TEMPLATES = ['', 'フォレスタ', 'iワーク＋', 'iワーク', 'Sirius', '学校ワーク', 'フォレスタ英単語', 'フォレスタステップ'];
+
+let planRows = []; // 現在編集中の計画シート
+
+function emptyPlanRow() {
+  return { done: false, date: '', subject: '', instruction: '', homework: '', memo: '' };
+}
+
+function getPlan(sid) {
+  const ps = getPS();
+  const plan = (ps[sid]||{}).plan;
+  if (plan && plan.length) {
+    // 16コマに足りない場合は追加
+    while (plan.length < PLAN_SLOTS) plan.push(emptyPlanRow());
+    return plan.slice(0, PLAN_SLOTS);
+  }
+  return Array.from({length: PLAN_SLOTS}, emptyPlanRow);
+}
+
+function renderPlanTable() {
+  const now = new Date();
+  const dateOpts = [''];
+  for (let d=-3; d<=30; d++) {
+    const t = new Date(now); t.setDate(t.getDate()+d);
+    dateOpts.push(`${t.getMonth()+1}/${t.getDate()}`);
+  }
+
+  const tbody = document.getElementById('plan-tbody');
+  if (!tbody) return;
+
+  tbody.innerHTML = planRows.map((r, i) => {
+    const rowBg = r.done ? 'background:#f0faf4;' : r.instruction||r.subject ? 'background:#eff6ff;' : '';
+    const doneBg = r.done ? 'background:#bbf7d0;' : '';
+
+    const dateSelect = `<select onchange="planRows[${i}].date=this.value;renderPlanTable()" style="width:65px;padding:3px 2px;border-radius:5px;border:1px solid var(--gray-2);font-size:11px;${r.date?'background:#bae6fd;border-color:#7dd3fc;':''}">
+      ${dateOpts.map(d=>`<option value="${d}" ${d===r.date?'selected':''}>${d||'—'}</option>`).join('')}
+    </select>`;
+
+    const subjSelect = `<select onchange="planRows[${i}].subject=this.value;renderPlanTable()" style="width:56px;padding:3px 2px;border-radius:5px;border:1px solid var(--gray-2);font-size:11px;${r.subject?'background:#bae6fd;border-color:#7dd3fc;':''}">
+      ${PLAN_SUBJECTS.map(s=>`<option value="${s}" ${s===r.subject?'selected':''}>${s||'—'}</option>`).join('')}
+    </select>`;
+
+    const instrSelect = `<select onchange="if(this.value){planRows[${i}].instruction=(planRows[${i}].instruction?planRows[${i}].instruction+'　':'')+this.value;this.value='';renderPlanTable();}" style="width:70px;padding:3px 2px;border-radius:5px;border:1px solid var(--gray-2);font-size:11px;margin-bottom:3px">
+      ${PLAN_INSTR_TEMPLATES.map(t=>`<option value="${t}">${t||'テンプレ'}</option>`).join('')}
+    </select>`;
+
+    const hwSelect = `<select onchange="if(this.value){planRows[${i}].homework=(planRows[${i}].homework?planRows[${i}].homework+'　':'')+this.value;this.value='';renderPlanTable();}" style="width:70px;padding:3px 2px;border-radius:5px;border:1px solid var(--gray-2);font-size:11px;margin-bottom:3px">
+      ${PLAN_HW_TEMPLATES.map(t=>`<option value="${t}">${t||'テンプレ'}</option>`).join('')}
+    </select>`;
+
+    return `<tr style="border-bottom:1px solid var(--gray-1);${rowBg}">
+      <td style="padding:5px 4px;text-align:center;vertical-align:middle;${doneBg}">
+        <input type="checkbox" ${r.done?'checked':''} onchange="planRows[${i}].done=this.checked;renderPlanTable()" style="width:18px;height:18px;cursor:pointer">
+      </td>
+      <td style="padding:4px 3px;text-align:center;vertical-align:top">${dateSelect}</td>
+      <td style="padding:4px 3px;text-align:center;vertical-align:top">${subjSelect}</td>
+      <td style="padding:4px 3px;vertical-align:top">
+        ${instrSelect}
+        <input type="text" value="${escH(r.instruction||'')}" oninput="planRows[${i}].instruction=this.value" placeholder="実施内容" style="width:100%;padding:4px 5px;border-radius:5px;border:1px solid var(--gray-2);font-size:11px;box-sizing:border-box;${r.instruction?'background:#bae6fd;':''}">
+      </td>
+      <td style="padding:4px 3px;vertical-align:top">
+        ${hwSelect}
+        <input type="text" value="${escH(r.homework||'')}" oninput="planRows[${i}].homework=this.value" placeholder="宿題" style="width:100%;padding:4px 5px;border-radius:5px;border:1px solid var(--gray-2);font-size:11px;box-sizing:border-box;${r.homework?'background:#bae6fd;':''}">
+      </td>
+      <td style="padding:4px 3px;vertical-align:top">
+        <input type="text" value="${escH(r.memo||'')}" oninput="planRows[${i}].memo=this.value" placeholder="メモ" style="width:100%;padding:4px 5px;border-radius:5px;border:1px solid var(--gray-2);font-size:11px;box-sizing:border-box">
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function savePlan() {
+  if (!currentStudent) return;
+  const sid = currentStudent.id;
+  const ps = getPS();
+  if (!ps[sid]) ps[sid] = {textbooks:[], data:{}};
+  ps[sid].plan = planRows.map(r => ({...r}));
+  _ps = ps;
+  savePS(ps, [sid]);
+  showToast('✅ 計画シートを保存しました');
+}
+
+// selectStudent を上書きして計画シートを表示
+function selectStudent(id) {
+  // 基本情報の設定
+  const students = getStudents();
+  currentStudent = students.find(s=>s.id===id);
+  if (!currentStudent) return;
+  document.getElementById('sel-name').textContent = currentStudent.name;
+  document.getElementById('sel-info').textContent = currentStudent.grade + ' ' + (currentStudent.school||'');
+  document.getElementById('student-select-panel').style.display='none';
+  document.getElementById('instruction-panel').style.display='block';
+  // 計画シートを読み込み
+  planRows = getPlan(id);
+  renderPlanTable();
 }
 // INIT
 async function initApp() {
