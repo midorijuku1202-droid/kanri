@@ -1334,14 +1334,7 @@ function switchTab(tab) {
     if(!skipReload){ loadRecords().then(()=>renderToday()); } else { renderToday(); }
   }
   if(tab==='settings'){ loadStudents().then(()=>renderSettingsList()); }
-  if(tab==='progress'){
-    const sinceLastSave = Date.now() - (window._lastSaveTime||0);
-    if (sinceLastSave > 3000) {
-      loadPS().then(()=>renderProgressList());
-    } else {
-      renderProgressList();
-    }
-  }
+  if(tab==='progress'){ renderProgressList(); }
   if(tab==='share'){ loadRecords().then(()=>renderShareList()); }
 }
 
@@ -2569,6 +2562,10 @@ function filterProgressGrade(grade, btn) {
   renderProgressList();
 }
 function renderProgressList(q='') {
+  // デバッグ: _psの状態確認
+  const psKeys = Object.keys(_ps||{});
+  const psInfo = psKeys.map(k=>k+':'+((_ps[k]||{}).textbooks||[]).length+'教材').join(', ');
+  if (psKeys.length > 0) showToast('_ps: ' + psInfo.slice(0,80));
   const students = getStudents();
   const ps = getPS();
   let list = students;
@@ -2629,7 +2626,7 @@ async function addTextbook() {
   const key=tbName+'_'+grade;
   const ps=getPS();
   if (!ps[pimAddSid]) ps[pimAddSid]={textbooks:[],data:{}};
-  const existing = ps[pimAddSid].textbooks.find(t=>t.key===key);
+  const existing = ps[pimAddSid].textbooks.find(t=>t.key===tbKey||t.key===key);
   if (existing){showToast('⚠️ すでに追加されています');return;}
   const items=getMasterItems(tbKey);
   ps[pimAddSid].textbooks.push({name:tbName,grade,key:tbKey});
