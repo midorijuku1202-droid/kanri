@@ -792,33 +792,39 @@ async function savePS(data) {
     'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY,
     'Content-Type': 'application/json', 'Prefer': 'return=minimal'
   };
-  const fetchOpts = { mode: 'cors', credentials: 'omit' };
   try {
     for (const [sid, val] of Object.entries(data)) {
       const dataJson = JSON.stringify(val);
       // 存在確認
       const chkRes = await fetch(SB_URL+'/rest/v1/progress?student_id=eq.'+encodeURIComponent(sid)+'&select=student_id', {
-        ...fetchOpts, headers: {'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
+        mode:'cors', credentials:'omit',
+        headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
       });
-      const exists = chkRes.ok ? (await chkRes.json()).length > 0 : false;
+      if (!chkRes.ok) {
+        showToast('⚠️ progress確認エラー: ' + chkRes.status);
+        return;
+      }
+      const exists = (await chkRes.json()).length > 0;
       let res;
       if (exists) {
         res = await fetch(SB_URL+'/rest/v1/progress?student_id=eq.'+encodeURIComponent(sid), {
-          ...fetchOpts, method:'PATCH', headers, body: JSON.stringify({data_json: dataJson})
+          method:'PATCH', mode:'cors', credentials:'omit',
+          headers, body: JSON.stringify({data_json: dataJson})
         });
       } else {
         res = await fetch(SB_URL+'/rest/v1/progress', {
-          ...fetchOpts, method:'POST', headers, body: JSON.stringify({student_id: sid, data_json: dataJson})
+          method:'POST', mode:'cors', credentials:'omit',
+          headers, body: JSON.stringify({student_id: sid, data_json: dataJson})
         });
       }
       if (!res.ok) {
         const txt = await res.text();
-        showToast('⚠️ 進捗保存エラー: ' + res.status + ' ' + txt.slice(0,60));
+        showToast('⚠️ progress保存エラー: ' + res.status + ' ' + txt.slice(0,80));
         return;
       }
     }
   } catch(e) {
-    showToast('⚠️ 進捗保存例外: ' + e.message);
+    showToast('⚠️ savePS例外: ' + e.message);
     console.error('savePS error:', e);
   }
 }
