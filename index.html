@@ -791,12 +791,19 @@ async function savePS(data) {
   try {
     const upserts = Object.entries(data).map(([sid,val])=>({student_id:sid, data_json:JSON.stringify(val)}));
     if (!upserts.length) return;
-    await fetch(SB_URL+'/rest/v1/progress?on_conflict=student_id', {
+    const res = await fetch(SB_URL+'/rest/v1/progress?on_conflict=student_id', {
       method:'POST',
       headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
       body: JSON.stringify(upserts)
     });
-  } catch(e) { console.error('savePS error:', e); }
+    if (!res.ok) {
+      const txt = await res.text();
+      showToast('⚠️ 進捗保存エラー: ' + res.status + ' ' + txt.slice(0,60));
+    }
+  } catch(e) {
+    showToast('⚠️ 進捗保存例外: ' + e.message);
+    console.error('savePS error:', e);
+  }
 }
 
 function getCustomMaster() { return _cm || {}; }
