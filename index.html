@@ -804,51 +804,32 @@ async function loadPS() {
 }
 async function savePS(data) {
   _ps = data;
-  const headers = {
-    'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY,
-    'Content-Type': 'application/json', 'Prefer': 'return=minimal'
-  };
-  try {
-    const entries = Object.entries(data);
-    for (const [sid, val] of entries) {
-      const dataJson = JSON.stringify(val);
-      // 存在確認
-      let chkRes;
-      try {
-        chkRes = await fetch(SB_URL+'/rest/v1/progress?student_id=eq.'+encodeURIComponent(sid)+'&select=student_id', {
+  // バックグラウンドでSupabaseに保存（エラーでも無視）
+  setTimeout(async () => {
+    try {
+      for (const [sid, val] of Object.entries(data)) {
+        const dataJson = JSON.stringify(val);
+        const chkRes = await fetch(SB_URL+'/rest/v1/progress?student_id=eq.'+encodeURIComponent(sid)+'&select=student_id', {
           mode:'cors', credentials:'omit',
           headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
         });
-      } catch(fetchErr) {
-        return;
+        const exists = chkRes.ok ? (await chkRes.json()).length > 0 : false;
+        if (exists) {
+          await fetch(SB_URL+'/rest/v1/progress?student_id=eq.'+encodeURIComponent(sid), {
+            method:'PATCH', mode:'cors', credentials:'omit',
+            headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+            body: JSON.stringify({data_json: dataJson})
+          });
+        } else {
+          await fetch(SB_URL+'/rest/v1/progress', {
+            method:'POST', mode:'cors', credentials:'omit',
+            headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+            body: JSON.stringify({student_id: sid, data_json: dataJson})
+          });
+        }
       }
-      if (!chkRes.ok) {
-        showToast('⚠️ progress確認エラー: ' + chkRes.status);
-        return;
-      }
-      const exists = (await chkRes.json()).length > 0;
-      let res;
-      if (exists) {
-        res = await fetch(SB_URL+'/rest/v1/progress?student_id=eq.'+encodeURIComponent(sid), {
-          method:'PATCH', mode:'cors', credentials:'omit',
-          headers, body: JSON.stringify({data_json: dataJson})
-        });
-      } else {
-        res = await fetch(SB_URL+'/rest/v1/progress', {
-          method:'POST', mode:'cors', credentials:'omit',
-          headers, body: JSON.stringify({student_id: sid, data_json: dataJson})
-        });
-      }
-      const resTxt = await res.text();
-      if (!res.ok) {
-        showToast('⚠️ progress保存エラー: ' + res.status + ' ' + resTxt.slice(0,80));
-        return;
-      }
-    }
-  } catch(e) {
-    showToast('⚠️ savePS例外: ' + e.message);
-    console.error('savePS error:', e);
-  }
+    } catch(e) { console.error('savePS bg error:', e); }
+  }, 0);
 }
 
 function getCustomMaster() { return _cm || {}; }
@@ -2548,10 +2529,10 @@ let pimSid = null, pimKey = null;
 let pimMode = 'input'; // 'input' | 'master'
 let pimRows = [];
 
-function getPS() { try { return JSON.parse(localStorage.getItem('midori_ps2')||'{}'); } catch(e) { return {}; } }
+// getPS: Supabase版を使用'); } catch(e) { return {}; } }
 // savePS: Supabase版を使用
-function getCustomMaster() { try { return JSON.parse(localStorage.getItem('midori_cm')||'{}'); } catch(e) { return {}; } }
-function saveCustomMaster(d) { localStorage.setItem('midori_cm', JSON.stringify(d)); }
+// getCustomMaster: Supabase版を使用'); } catch(e) { return {}; } }
+// saveCustomMaster: Supabase版を使用
 function getMasterItems(key) { const cm = getCustomMaster(); return cm[key] ? cm[key] : (TEXTBOOKS[key]||[]); }
 
 // ── Progress list ──
@@ -2562,10 +2543,7 @@ function filterProgressGrade(grade, btn) {
   renderProgressList();
 }
 function renderProgressList(q='') {
-  // デバッグ: _psの状態確認
-  const psKeys = Object.keys(_ps||{});
-  const psInfo = psKeys.map(k=>k+':'+((_ps[k]||{}).textbooks||[]).length+'教材').join(', ');
-  if (psKeys.length > 0) showToast('_ps: ' + psInfo.slice(0,80));
+
   const students = getStudents();
   const ps = getPS();
   let list = students;
@@ -2631,14 +2609,11 @@ async function addTextbook() {
   const items=getMasterItems(tbKey);
   ps[pimAddSid].textbooks.push({name:tbName,grade,key:tbKey});
   ps[pimAddSid].data[tbKey]=items.map(item=>{return {step:item.step,title:item.title,page:item.page,date:'',date2:'',ct:'',review:'',retest:'',precheck:'',testRangeStart:false,testRangeEnd:false};});
-  // _ps を直接更新してからSupabaseに保存
+  // _ps を直接更新してからSupabaseに保存（awaitしない）
   _ps = ps;
-  showToast('★_ps更新: sid='+pimAddSid+' tbs='+(_ps[pimAddSid]?.textbooks?.length||0));
-  await savePS(ps);
+  savePS(ps); // バックグラウンドで保存
   window._lastSaveTime = Date.now();
-  showToast('★savePS完了');
   closeAddTextbookModal();
-  showToast('★closeModal完了');
   renderProgressList(document.getElementById('prog-search').value);
   showToast('✅ '+tbName+'（'+grade+'）を追加しました');
 }
