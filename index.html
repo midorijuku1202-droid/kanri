@@ -810,20 +810,16 @@ async function savePS(data) {
   };
   try {
     const entries = Object.entries(data);
-    alert('savePS実行: ' + entries.length + '件\n最初のsid: ' + (entries[0]?.[0]||'なし'));
     for (const [sid, val] of entries) {
       const dataJson = JSON.stringify(val);
       // 存在確認
-      alert('fetch前 sid=' + sid);
       let chkRes;
       try {
         chkRes = await fetch(SB_URL+'/rest/v1/progress?student_id=eq.'+encodeURIComponent(sid)+'&select=student_id', {
           mode:'cors', credentials:'omit',
           headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
         });
-        alert('fetch後 status=' + chkRes.status);
       } catch(fetchErr) {
-        alert('fetchエラー: ' + fetchErr.message);
         return;
       }
       if (!chkRes.ok) {
@@ -831,7 +827,6 @@ async function savePS(data) {
         return;
       }
       const exists = (await chkRes.json()).length > 0;
-      alert('exists=' + exists);
       let res;
       if (exists) {
         res = await fetch(SB_URL+'/rest/v1/progress?student_id=eq.'+encodeURIComponent(sid), {
@@ -845,7 +840,6 @@ async function savePS(data) {
         });
       }
       const resTxt = await res.text();
-      alert((exists?'PATCH':'POST') + ' status=' + res.status + ' body=' + resTxt.slice(0,100));
       if (!res.ok) {
         showToast('⚠️ progress保存エラー: ' + res.status + ' ' + resTxt.slice(0,80));
         return;
@@ -2621,24 +2615,20 @@ function updateGradeOptions() {
   });
 }
 async function addTextbook() {
-  alert('addTextbook呼び出し pimAddSid=' + pimAddSid);
   const tbName=document.getElementById('atb-textbook').value;
   const grade=document.getElementById('atb-grade').value;
   if (!tbName||!grade){showToast('⚠️ 教材と学年を選択してください');return;}
   const tbKey=TB_MENU[tbName][grade];
   const key=tbName+'_'+grade;
   const ps=getPS();
-  alert('ps keys=' + Object.keys(ps).length + ' tbKey=' + tbKey + ' key=' + key);
   if (!ps[pimAddSid]) ps[pimAddSid]={textbooks:[],data:{}};
   const existing = ps[pimAddSid].textbooks.find(t=>t.key===key);
-  alert('existing=' + (existing?'あり':'なし') + ' textbooks数=' + ps[pimAddSid].textbooks.length);
   if (existing){showToast('⚠️ すでに追加されています');return;}
   const items=getMasterItems(tbKey);
-  alert('items数=' + (items?items.length:'null'));
   ps[pimAddSid].textbooks.push({name:tbName,grade,key:tbKey});
   ps[pimAddSid].data[tbKey]=items.map(item=>{return {step:item.step,title:item.title,page:item.page,date:'',date2:'',ct:'',review:'',retest:'',precheck:'',testRangeStart:false,testRangeEnd:false};});
-  alert('savePS直前 ps keys=' + Object.keys(ps).length);
   await savePS(ps);
+  // _ps を確認
   closeAddTextbookModal();
   renderProgressList(document.getElementById('prog-search').value);
   showToast('✅ '+tbName+'（'+grade+'）を追加しました');
