@@ -1136,13 +1136,22 @@ function renderToday() {
     return;
   }
 
-  const sortedNames = [
+  let sortedNames = [
     ...absentNames,
     ...transferNames.filter(n => !absentNames.includes(n)),
     ...scheduledNames.filter(n => !absentNames.includes(n) && !transferNames.includes(n) && !recordedNames.includes(n)),
     ...recordedNames.filter(n => !absentNames.includes(n) && !transferNames.includes(n)),
     ...recordedNames.filter(n => !scheduledNames.includes(n) && !transferNames.includes(n) && !absentNames.includes(n))
   ].filter((n,i,a) => a.indexOf(n) === i);
+
+  // 学年フィルタ
+  const gradeFilter = window._todayGradeFilter || 'all';
+  if (gradeFilter !== 'all') {
+    sortedNames = sortedNames.filter(name => {
+      const s = students.find(st => st.name === name);
+      return s?.grade === gradeFilter;
+    });
+  }
 
   let html = '';
   sortedNames.forEach(name => {
@@ -1178,6 +1187,7 @@ function renderToday() {
       <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
         <span>${absent?'🔴 ':isTransfer?'🔄 ':''}${name}${statusBadge}<span style="font-size:11px;color:var(--gray-3);font-weight:400;margin-left:6px">${s?.grade||''} ${s?.school||''}</span></span>
         <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+          <button onclick="goToInstrInput('${encodeURIComponent(name)}','${dateKey}')" style="background:var(--green);color:white;border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">📝 記入</button>
           <button onclick="toggleAbsence('${dateKey}','${safeName}')" style="${absentBtnStyle}padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">${absent ? '✓ 欠席' : '欠席'}</button>
           ${isTransfer
             ? `<button onclick="removeTransfer('${dateKey}','${safeName}')" style="background:#fed7aa;color:#c2410c;border:1px solid #fdba74;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">振替解除</button>`
@@ -1793,7 +1803,7 @@ function filterScheduled(grade, btn) {
   btn.style.background = 'var(--green)';
   btn.style.color = 'white';
   renderScheduledList(grade);
-  renderTodayList(grade);
+
 }
 
 
@@ -2269,158 +2279,25 @@ function setSelectedDays(days) {
 // ===== 本日タブの曜日ベース表示 =====
 // renderToday を上書き
 const _origRenderToday = renderToday;
-function renderToday() {
-  const dpEl = document.getElementById('today-date-picker');
-  if (dpEl && !dpEl.value) dpEl.value = getTodayKey();
-  const dateKey = dpEl && dpEl.value ? dpEl.value : getTodayKey();
-  const dow = getDateDow(dateKey);
-  const isToday = dateKey === getTodayKey();
 
-  const records = _records || [];
-  const todayRecs = records.filter(r => r.date === dateKey);
-  const absences = getAbsences();
-  const absentNames = absences[dateKey] || [];
 
-  // 曜日登録がある生徒を取得
-  const sched = getDaySchedule();
-  const students = getStudents();
-  const scheduledStudents = students.filter(s => (sched[s.id]||[]).includes(dow));
 
-  // 来塾予定の生徒名一覧
-  const scheduledNames = scheduledStudents.map(s => s.name);
-  // 指示表入力済みの生徒名
-  const recordedNames = [...new Set(todayRecs.map(r => r.studentName))];
-  // 全表示対象（曜日登録 + 欠席登録 + 指示記入済み）
-  const allNames = [...new Set([...absentNames, ...scheduledNames, ...recordedNames])];
 
-  document.getElementById('today-count').textContent = todayRecs.length;
-  document.getElementById('today-students').textContent =
-    scheduledNames.length + '人予定' + (recordedNames.length ? '（' + recordedNames.length + '人記入済）' : '');
-
-  // タイトル更新
-  const titleEl = document.getElementById('today-scheduled-title');
-  if (titleEl) titleEl.textContent = `📋 ${dow}曜日の生徒（${scheduledNames.length}人）`;
-
-  // 予定リスト更新
-  window._scheduledStudents = allNames.map(name => {
-    const s = students.find(st => st.name === name);
-    const hasRecord = recordedNames.includes(name);
-    const absent = absentNames.includes(name);
-    const subjs = [...new Set(todayRecs.filter(r => r.studentName === name).map(r => r.subject))];
-    return { name, grade: s?.grade||'', school: s?.school||'', subjs, absent, hasRecord };
-  });
-  renderScheduledList('all');
-
-  // メインリスト
-  const el = document.getElementById('today-list');
-  if (!el) return;
-
-  if (!allNames.length) {
-    el.innerHTML = `<div class="empty-state"><div class="icon">📅</div>${dow}曜日に登録された生徒がいません</div>`;
-    return;
-  }
-
-  const sortedNames = [
-    ...absentNames,
-    ...scheduledNames.filter(n => !absentNames.includes(n) && !recordedNames.includes(n)),
-    ...recordedNames.filter(n => !absentNames.includes(n)),
-    ...recordedNames.filter(n => !scheduledNames.includes(n) && !absentNames.includes(n))
-  ].filter((n,i,a) => a.indexOf(n) === i);
-
-  window._todayRenderData = { sortedNames, students, todayRecs, absentNames, recordedNames, dateKey };
-  renderTodayList(window._currentTodayGrade || 'all');
-}
-
-function renderTodayList(grade) {
-  window._currentTodayGrade = grade;
-  const d = window._todayRenderData;
-  if (!d) return;
-  const { sortedNames, students, todayRecs, absentNames, recordedNames, dateKey } = d;
-  const el = document.getElementById('today-list');
-  if (!el) return;
-
-  // 学年フィルタ
-  const filteredNames = grade === 'all' ? sortedNames : sortedNames.filter(name => {
-    const s = students.find(st => st.name === name);
-    return s?.grade === grade;
-  });
-
-  if (!filteredNames.length) {
-    el.innerHTML = `<div class="empty-state"><div class="icon">📅</div>${grade === 'all' ? '表示する生徒がいません' : grade + 'の生徒がいません'}</div>`;
-    return;
-  }
-
-  let html = '';
-  filteredNames.forEach(name => {
-    const absent  = absentNames.includes(name);
-    const hasRec  = recordedNames.includes(name);
-    const srecs   = todayRecs.filter(r => r.studentName === name);
-    const s       = students.find(st => st.name === name);
-    const safeId  = encodeURIComponent(name);
-    const safeName = name.replace(/'/g, "\\'");
-
-    // カードスタイル：欠席=赤、未記入=赤枠、記入済=青枠
-    let cardStyle = '';
-    if (absent) cardStyle = 'border:2px solid #ef4444;background:#fff5f5;';
-    else if (!hasRec) cardStyle = 'border:2px solid #ef4444;background:#fff5f5;';
-    else cardStyle = 'border:2px solid #3b82f6;background:#eff6ff;';
-
-    const absentBtnStyle = absent
-      ? 'background:#ef4444;color:white;border:none;'
-      : 'background:#fee2e2;color:#ef4444;border:1px solid #fca5a5;';
-
-    const statusBadge = absent
-      ? '<span style="font-size:11px;color:#ef4444;font-weight:700;margin-left:6px">欠席</span>'
-      : !hasRec
-      ? '<span style="font-size:11px;color:#ef4444;font-weight:700;margin-left:6px">未記入</span>'
-      : '<span style="font-size:11px;color:#3b82f6;font-weight:700;margin-left:6px">記入済</span>';
-
-    html += `<div class="card" style="${cardStyle}margin-bottom:10px">
-      <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
-        <span>${absent?'🔴 ':''}${name}${statusBadge}<span style="font-size:11px;color:var(--gray-3);font-weight:400;margin-left:6px">${s?.grade||''} ${s?.school||''}</span></span>
-        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-          <button onclick="goToInstrInput('${encodeURIComponent(name)}')" style="background:var(--green);color:white;border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">📝 記入</button>
-          <button onclick="toggleAbsence('${dateKey}','${safeName}')" style="${absentBtnStyle}padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">
-            ${absent ? '✓ 欠席' : '欠席'}
-          </button>
-          <button class="print-btn" style="width:auto;padding:6px 12px;font-size:12px;margin:0" onclick="printStudent('${safeId}')">🖨️ 印刷</button>
-        </div>
-      </div>`;
-
-    if (absent) {
-      html += `<div style="font-size:13px;color:#ef4444;padding:6px 0">この日は欠席</div>`;
-    }
-
-    srecs.forEach(r => {
-      html += `<div style="margin-bottom:8px;display:flex;align-items:flex-start;gap:6px;flex-wrap:wrap">
-        <span class="hist-subj subj-${r.subject}">${r.subject}</span>
-        <div style="flex:1">
-          <div style="font-size:13px">${r.hasTest||r.has_test?'【テスト】'+(r.testContent||r.test_content||'')+'　→　':''}${r.instruction||''}${r.memo?'　📝'+r.memo:''}</div>
-          ${r.homework?`<div style="font-size:12px;color:#9d174d;margin-top:2px">📚 ${r.homework}</div>`:''}
-        </div>
-        <button onclick="openRecordEditById(${r.id})" style="background:var(--gray-1);border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;flex-shrink:0">✏️</button>
-      </div>`;
-    });
-
-    if (!absent && !hasRec) {
-      html += `<div style="font-size:12px;color:#ef4444;padding:4px 0">まだ指示が入力されていません</div>`;
-    }
-
-    html += '</div>';
-  });
-  el.innerHTML = html;
-}
-
-function goToInstrInput(encodedName) {
+function goToInstrInput(encodedName, dateKey) {
   const name = decodeURIComponent(encodedName);
   const students = getStudents();
   const s = students.find(st => st.name === name);
   if (!s) { showToast('⚠️ 生徒が見つかりません'); return; }
-  // 指示入力タブに切り替えて生徒を選択
   switchTab('input');
-  // 少し待ってから生徒を選択（タブ切替アニメーション後）
   setTimeout(() => {
     selectStudent(s.id);
+    // 日付が指定されていれば設定
+    if (dateKey) {
+      setTimeout(() => {
+        const el = document.getElementById('instr-date');
+        if (el) el.value = dateKey;
+      }, 50);
+    }
   }, 100);
 }
 
