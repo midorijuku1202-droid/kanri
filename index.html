@@ -2604,11 +2604,14 @@ async function addTextbook() {
   const ps=getPS();
   alert('ps keys=' + Object.keys(ps).length + ' tbKey=' + tbKey + ' key=' + key);
   if (!ps[pimAddSid]) ps[pimAddSid]={textbooks:[],data:{}};
-  if (ps[pimAddSid].textbooks.find(t=>t.key===key)){showToast('⚠️ すでに追加されています');return;}
+  const existing = ps[pimAddSid].textbooks.find(t=>t.key===key);
+  alert('existing=' + (existing?'あり':'なし') + ' textbooks数=' + ps[pimAddSid].textbooks.length);
+  if (existing){showToast('⚠️ すでに追加されています');return;}
   const items=getMasterItems(tbKey);
+  alert('items数=' + (items?items.length:'null'));
   ps[pimAddSid].textbooks.push({name:tbName,grade,key});
   ps[pimAddSid].data[key]=items.map(item=>{return {step:item.step,title:item.title,page:item.page,date:'',ct:'',review:'',retest:'',precheck:'',testRangeStart:false,testRangeEnd:false};});
-  showToast('savePS呼び出し中... sid='+pimAddSid+' keys='+Object.keys(ps).length);
+  alert('savePS直前 ps keys=' + Object.keys(ps).length);
   await savePS(ps);
   closeAddTextbookModal();
   renderProgressList(document.getElementById('prog-search').value);
