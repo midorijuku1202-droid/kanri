@@ -793,11 +793,28 @@ async function savePS(data) {
     if (!upserts.length) return;
     // 1件ずつ個別にupsert
     for (const upsert of upserts) {
-      const res = await fetch(SB_URL+'/rest/v1/progress?on_conflict=student_id', {
-        method:'POST',
-        headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
-        body: JSON.stringify(upsert)
+      // まず既存レコードを確認
+      const chkRes = await fetch(SB_URL+'/rest/v1/progress?student_id=eq.'+encodeURIComponent(upsert.student_id)+'&select=student_id', {
+        headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
       });
+      const exists = chkRes.ok ? (await chkRes.json()).length > 0 : false;
+      
+      let res;
+      if (exists) {
+        // UPDATE
+        res = await fetch(SB_URL+'/rest/v1/progress?student_id=eq.'+encodeURIComponent(upsert.student_id), {
+          method:'PATCH',
+          headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+          body: JSON.stringify({data_json: upsert.data_json})
+        });
+      } else {
+        // INSERT
+        res = await fetch(SB_URL+'/rest/v1/progress', {
+          method:'POST',
+          headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+          body: JSON.stringify(upsert)
+        });
+      }
       if (!res.ok) {
         const txt = await res.text();
         showToast('⚠️ 進捗保存エラー: ' + res.status + ' ' + txt.slice(0,80));
