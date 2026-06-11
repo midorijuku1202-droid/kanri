@@ -798,15 +798,24 @@ async function savePS(data) {
     for (const [sid, val] of entries) {
       const dataJson = JSON.stringify(val);
       // 存在確認
-      const chkRes = await fetch(SB_URL+'/rest/v1/progress?student_id=eq.'+encodeURIComponent(sid)+'&select=student_id', {
-        mode:'cors', credentials:'omit',
-        headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
-      });
+      alert('fetch前 sid=' + sid);
+      let chkRes;
+      try {
+        chkRes = await fetch(SB_URL+'/rest/v1/progress?student_id=eq.'+encodeURIComponent(sid)+'&select=student_id', {
+          mode:'cors', credentials:'omit',
+          headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
+        });
+        alert('fetch後 status=' + chkRes.status);
+      } catch(fetchErr) {
+        alert('fetchエラー: ' + fetchErr.message);
+        return;
+      }
       if (!chkRes.ok) {
         showToast('⚠️ progress確認エラー: ' + chkRes.status);
         return;
       }
       const exists = (await chkRes.json()).length > 0;
+      alert('exists=' + exists);
       let res;
       if (exists) {
         res = await fetch(SB_URL+'/rest/v1/progress?student_id=eq.'+encodeURIComponent(sid), {
