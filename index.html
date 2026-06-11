@@ -376,10 +376,10 @@ const sb = {
     </div>
   </div>
 
-  <!-- 今日の予定がある生徒リスト -->
-  <div id="today-scheduled-bar" style="display:none;background:var(--green-pale);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px">
+  <!-- 今日の予定がある生徒リスト（曜日ベース） -->
+  <div id="today-scheduled-bar" style="background:var(--green-pale);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px">
-      <div style="font-size:12px;font-weight:700;color:var(--green)">📋 本日予定の生徒</div>
+      <div style="font-size:12px;font-weight:700;color:var(--green)" id="today-scheduled-title">📋 本日の生徒</div>
       <div style="display:flex;gap:4px" id="scheduled-grade-tabs">
         <button class="sched-tab active" onclick="filterScheduled('all',this)" style="padding:4px 10px;border-radius:14px;border:1.5px solid var(--green-mid);background:var(--green);color:white;font-size:11px;font-weight:700;cursor:pointer">全員</button>
         <button class="sched-tab" onclick="filterScheduled('中1',this)" style="padding:4px 10px;border-radius:14px;border:1.5px solid var(--green-mid);background:white;color:var(--green);font-size:11px;font-weight:700;cursor:pointer">中1</button>
@@ -434,6 +434,17 @@ const sb = {
     <div class="modal-row">
       <div class="modal-label">学校名</div>
       <input type="text" id="m-school" placeholder="例：鳴子台">
+    </div>
+    <div class="modal-row">
+      <div class="modal-label">来塾曜日（最大4日）</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px" id="m-days-selector">
+        <button type="button" class="day-sel-btn" data-day="月" onclick="toggleDayBtn(this)" style="padding:6px 12px;border-radius:20px;border:2px solid var(--gray-2);background:white;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-sub)">月</button>
+        <button type="button" class="day-sel-btn" data-day="火" onclick="toggleDayBtn(this)" style="padding:6px 12px;border-radius:20px;border:2px solid var(--gray-2);background:white;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-sub)">火</button>
+        <button type="button" class="day-sel-btn" data-day="水" onclick="toggleDayBtn(this)" style="padding:6px 12px;border-radius:20px;border:2px solid var(--gray-2);background:white;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-sub)">水</button>
+        <button type="button" class="day-sel-btn" data-day="木" onclick="toggleDayBtn(this)" style="padding:6px 12px;border-radius:20px;border:2px solid var(--gray-2);background:white;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-sub)">木</button>
+        <button type="button" class="day-sel-btn" data-day="金" onclick="toggleDayBtn(this)" style="padding:6px 12px;border-radius:20px;border:2px solid var(--gray-2);background:white;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-sub)">金</button>
+        <button type="button" class="day-sel-btn" data-day="土" onclick="toggleDayBtn(this)" style="padding:6px 12px;border-radius:20px;border:2px solid var(--gray-2);background:white;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-sub)">土</button>
+      </div>
     </div>
     <div class="modal-actions">
       <button class="btn-secondary" onclick="closeModal()">キャンセル</button>
@@ -1106,7 +1117,8 @@ function renderToday() {
     html += `<div class="card" style="${cardStyle}margin-bottom:10px">
       <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
         <span>${absent ? '🔴 ' : ''}${name}<span style="font-size:11px;color:var(--gray-3);font-weight:400;margin-left:6px">${s?.grade||''} ${s?.school||''}</span></span>
-        <div style="display:flex;gap:6px;align-items:center">
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <button onclick="goToInstrInput('${encodeURIComponent(name)}')" style="background:var(--green);color:white;border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">📝 記入</button>
           <button onclick="toggleAbsence('${dateKey}','${safeName}')" style="${absentBtnStyle}padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">
             ${absent ? '✓ 欠席' : '欠席'}
           </button>
@@ -1194,6 +1206,7 @@ function openAddModal() {
   document.getElementById('m-grade').value='中1';
   document.getElementById('m-school').value='';
   document.getElementById('modal-delete-btn').style.display='none';
+  setSelectedDays([]);
   document.getElementById('student-modal').classList.add('open');
 }
 function openEditModal(id) {
@@ -1206,6 +1219,9 @@ function openEditModal(id) {
   document.getElementById('m-grade').value=s.grade;
   document.getElementById('m-school').value=s.school||'';
   document.getElementById('modal-delete-btn').style.display='inline-block';
+  // 曜日を反映
+  const sched = getDaySchedule();
+  setSelectedDays(sched[id]||[]);
   document.getElementById('student-modal').classList.add('open');
 }
 function closeModal() { document.getElementById('student-modal').classList.remove('open'); }
@@ -1228,6 +1244,13 @@ async function saveStudentModal() {
     showToast('✅ 生徒を追加しました');
   }
   await saveStudents(students);
+  // 曜日を保存
+  const updatedS = getStudents().find(st=>st.name===name);
+  if (updatedS) {
+    const sched = getDaySchedule();
+    sched[updatedS.id] = getSelectedDays();
+    saveDaySchedule(sched);
+  }
   closeModal();
   renderStudents();
   renderSettingsList();
@@ -1353,11 +1376,12 @@ function switchSpTab(idx) {
       <th style="padding:5px 6px;border:1px solid #ddd;text-align:left;white-space:nowrap">STEP</th>
       <th style="padding:5px 6px;border:1px solid #ddd;text-align:left">タイトル</th>
       <th style="padding:5px 6px;border:1px solid #ddd;text-align:center;white-space:nowrap">P</th>
-      <th style="padding:5px 6px;border:1px solid #ddd;text-align:center;white-space:nowrap">実施日</th>
-      <th style="padding:5px 6px;border:1px solid #ddd;text-align:center">CT</th>
+      <th style="padding:5px 6px;border:1px solid #ddd;text-align:center;white-space:nowrap">実施日①</th>
+      <th style="padding:5px 6px;border:1px solid #ddd;text-align:center;white-space:nowrap">実施日②</th>
+      <th style="padding:5px 6px;border:1px solid #ddd;text-align:center">CT①</th>
       <th style="padding:5px 6px;border:1px solid #ddd;text-align:center">補習</th>
-      <th style="padding:5px 6px;border:1px solid #ddd;text-align:center">再CT</th>
-      <th style="padding:5px 6px;border:1px solid #ddd;text-align:center">定期前</th>
+      <th style="padding:5px 6px;border:1px solid #ddd;text-align:center">CT②</th>
+      <th style="padding:5px 6px;border:1px solid #ddd;text-align:center">CT③</th>
     </tr>`;
   }
 
@@ -1395,6 +1419,7 @@ function switchSpTab(idx) {
         <td style="padding:4px 6px;border:1px solid #eee">${r.title}</td>
         <td style="padding:4px 6px;border:1px solid #eee;text-align:center;white-space:nowrap;color:var(--text-sub)">${r.page||''}</td>
         <td style="padding:4px 6px;border:1px solid #eee;text-align:center;${r.date?'background:#bae6fd;':''}">${r.date||''}</td>
+        <td style="padding:4px 6px;border:1px solid #eee;text-align:center;${r.date2?'background:#bae6fd;':''}">${r.date2||''}</td>
         <td style="padding:4px 6px;border:1px solid #eee;text-align:center;${ctBg}">${r.ct||''}</td>
         <td style="padding:4px 6px;border:1px solid #eee;text-align:center;${rvBg}">${r.review||''}</td>
         <td style="padding:4px 6px;border:1px solid #eee;text-align:center;${rtBg}">${r.retest||''}</td>
@@ -1703,6 +1728,7 @@ function filterScheduled(grade, btn) {
   btn.style.background = 'var(--green)';
   btn.style.color = 'white';
   renderScheduledList(grade);
+  renderTodayList(grade);
 }
 
 
@@ -2109,13 +2135,224 @@ function openPrintTab() {
   const printHtml = '<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8">'
     + '<meta name="viewport" content="width=device-width,initial-scale=1.0">'
     + '<title>学習レポート</title>'
-    + '<style>body{font-family:"Hiragino Sans","Meiryo",sans-serif;margin:0;padding:0;background:white;}'
-    + 'table{border-collapse:collapse;}th,td{border:1px solid #ccc;padding:4px 6px;font-size:11px;}'
-    + '@media print{body{margin:0;}}</style>'
-    + '</head><body>' + inner + '</body></html>';
-  // data URIで開く（iOS Safari対応）
-  const dataUri = 'data:text/html;charset=utf-8,' + encodeURIComponent(printHtml);
-  window.location.href = dataUri;
+    + '<style>body{font-family:"Hiragino Sans","Meiryo",sans-serif;margin:16px;background:white;}'
+    + 'table{border-collapse:collapse;width:100%;}'
+    + 'th,td{border:1px solid #ccc;padding:4px 6px;font-size:11px;}'
+    + '@media print{body{margin:0;}}</style></head><body>' + inner + '</body></html>';
+  const blob = new Blob([printHtml], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+}
+
+// ===== 曜日管理 =====
+function getDaySchedule() {
+  try { return JSON.parse(localStorage.getItem('midori_days')||'{}'); } catch(e) { return {}; }
+}
+function saveDaySchedule(d) { localStorage.setItem('midori_days', JSON.stringify(d)); }
+
+function getTodayDow() {
+  const days = ['日','月','火','水','木','金','土'];
+  return days[new Date().getDay()];
+}
+function getDateDow(dateKey) {
+  const days = ['日','月','火','水','木','金','土'];
+  return days[new Date(dateKey + 'T00:00:00').getDay()];
+}
+
+function toggleDayBtn(btn) {
+  const day = btn.dataset.day;
+  const selected = btn.style.background === 'var(--green)' || btn.style.background === 'rgb(45, 106, 79)';
+  if (!selected) {
+    // 選択済み数チェック
+    const count = document.querySelectorAll('#m-days-selector button[style*="rgb(45, 106, 79)"], #m-days-selector button[style*="var(--green)"]').length;
+    if (count >= 4) { showToast('⚠️ 最大4日まで'); return; }
+    btn.style.background = 'var(--green)';
+    btn.style.color = 'white';
+    btn.style.borderColor = 'var(--green)';
+  } else {
+    btn.style.background = 'white';
+    btn.style.color = 'var(--text-sub)';
+    btn.style.borderColor = 'var(--gray-2)';
+  }
+}
+
+function getSelectedDays() {
+  const btns = document.querySelectorAll('#m-days-selector .day-sel-btn');
+  const days = [];
+  btns.forEach(btn => {
+    const bg = btn.style.background;
+    if (bg === 'var(--green)' || bg === 'rgb(45, 106, 79)') days.push(btn.dataset.day);
+  });
+  return days;
+}
+
+function setSelectedDays(days) {
+  document.querySelectorAll('#m-days-selector .day-sel-btn').forEach(btn => {
+    const active = (days||[]).includes(btn.dataset.day);
+    btn.style.background = active ? 'var(--green)' : 'white';
+    btn.style.color = active ? 'white' : 'var(--text-sub)';
+    btn.style.borderColor = active ? 'var(--green)' : 'var(--gray-2)';
+  });
+}
+
+// 曜日処理はopenEditModal/openAddModal/saveStudentModal内で直接呼ぶ
+
+// ===== 本日タブの曜日ベース表示 =====
+// renderToday を上書き
+const _origRenderToday = renderToday;
+function renderToday() {
+  const dpEl = document.getElementById('today-date-picker');
+  if (dpEl && !dpEl.value) dpEl.value = getTodayKey();
+  const dateKey = dpEl && dpEl.value ? dpEl.value : getTodayKey();
+  const dow = getDateDow(dateKey);
+  const isToday = dateKey === getTodayKey();
+
+  const records = _records || [];
+  const todayRecs = records.filter(r => r.date === dateKey);
+  const absences = getAbsences();
+  const absentNames = absences[dateKey] || [];
+
+  // 曜日登録がある生徒を取得
+  const sched = getDaySchedule();
+  const students = getStudents();
+  const scheduledStudents = students.filter(s => (sched[s.id]||[]).includes(dow));
+
+  // 来塾予定の生徒名一覧
+  const scheduledNames = scheduledStudents.map(s => s.name);
+  // 指示表入力済みの生徒名
+  const recordedNames = [...new Set(todayRecs.map(r => r.studentName))];
+  // 全表示対象（曜日登録 + 欠席登録 + 指示記入済み）
+  const allNames = [...new Set([...absentNames, ...scheduledNames, ...recordedNames])];
+
+  document.getElementById('today-count').textContent = todayRecs.length;
+  document.getElementById('today-students').textContent =
+    scheduledNames.length + '人予定' + (recordedNames.length ? '（' + recordedNames.length + '人記入済）' : '');
+
+  // タイトル更新
+  const titleEl = document.getElementById('today-scheduled-title');
+  if (titleEl) titleEl.textContent = `📋 ${dow}曜日の生徒（${scheduledNames.length}人）`;
+
+  // 予定リスト更新
+  window._scheduledStudents = allNames.map(name => {
+    const s = students.find(st => st.name === name);
+    const hasRecord = recordedNames.includes(name);
+    const absent = absentNames.includes(name);
+    const subjs = [...new Set(todayRecs.filter(r => r.studentName === name).map(r => r.subject))];
+    return { name, grade: s?.grade||'', school: s?.school||'', subjs, absent, hasRecord };
+  });
+  renderScheduledList('all');
+
+  // メインリスト
+  const el = document.getElementById('today-list');
+  if (!el) return;
+
+  if (!allNames.length) {
+    el.innerHTML = `<div class="empty-state"><div class="icon">📅</div>${dow}曜日に登録された生徒がいません</div>`;
+    return;
+  }
+
+  const sortedNames = [
+    ...absentNames,
+    ...scheduledNames.filter(n => !absentNames.includes(n) && !recordedNames.includes(n)),
+    ...recordedNames.filter(n => !absentNames.includes(n)),
+    ...recordedNames.filter(n => !scheduledNames.includes(n) && !absentNames.includes(n))
+  ].filter((n,i,a) => a.indexOf(n) === i);
+
+  window._todayRenderData = { sortedNames, students, todayRecs, absentNames, recordedNames, dateKey };
+  renderTodayList(window._currentTodayGrade || 'all');
+}
+
+function renderTodayList(grade) {
+  window._currentTodayGrade = grade;
+  const d = window._todayRenderData;
+  if (!d) return;
+  const { sortedNames, students, todayRecs, absentNames, recordedNames, dateKey } = d;
+  const el = document.getElementById('today-list');
+  if (!el) return;
+
+  // 学年フィルタ
+  const filteredNames = grade === 'all' ? sortedNames : sortedNames.filter(name => {
+    const s = students.find(st => st.name === name);
+    return s?.grade === grade;
+  });
+
+  if (!filteredNames.length) {
+    el.innerHTML = `<div class="empty-state"><div class="icon">📅</div>${grade === 'all' ? '表示する生徒がいません' : grade + 'の生徒がいません'}</div>`;
+    return;
+  }
+
+  let html = '';
+  filteredNames.forEach(name => {
+    const absent  = absentNames.includes(name);
+    const hasRec  = recordedNames.includes(name);
+    const srecs   = todayRecs.filter(r => r.studentName === name);
+    const s       = students.find(st => st.name === name);
+    const safeId  = encodeURIComponent(name);
+    const safeName = name.replace(/'/g, "\\'");
+
+    // カードスタイル：欠席=赤、未記入=赤枠、記入済=青枠
+    let cardStyle = '';
+    if (absent) cardStyle = 'border:2px solid #ef4444;background:#fff5f5;';
+    else if (!hasRec) cardStyle = 'border:2px solid #ef4444;background:#fff5f5;';
+    else cardStyle = 'border:2px solid #3b82f6;background:#eff6ff;';
+
+    const absentBtnStyle = absent
+      ? 'background:#ef4444;color:white;border:none;'
+      : 'background:#fee2e2;color:#ef4444;border:1px solid #fca5a5;';
+
+    const statusBadge = absent
+      ? '<span style="font-size:11px;color:#ef4444;font-weight:700;margin-left:6px">欠席</span>'
+      : !hasRec
+      ? '<span style="font-size:11px;color:#ef4444;font-weight:700;margin-left:6px">未記入</span>'
+      : '<span style="font-size:11px;color:#3b82f6;font-weight:700;margin-left:6px">記入済</span>';
+
+    html += `<div class="card" style="${cardStyle}margin-bottom:10px">
+      <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+        <span>${absent?'🔴 ':''}${name}${statusBadge}<span style="font-size:11px;color:var(--gray-3);font-weight:400;margin-left:6px">${s?.grade||''} ${s?.school||''}</span></span>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <button onclick="goToInstrInput('${encodeURIComponent(name)}')" style="background:var(--green);color:white;border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">📝 記入</button>
+          <button onclick="toggleAbsence('${dateKey}','${safeName}')" style="${absentBtnStyle}padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">
+            ${absent ? '✓ 欠席' : '欠席'}
+          </button>
+          <button class="print-btn" style="width:auto;padding:6px 12px;font-size:12px;margin:0" onclick="printStudent('${safeId}')">🖨️ 印刷</button>
+        </div>
+      </div>`;
+
+    if (absent) {
+      html += `<div style="font-size:13px;color:#ef4444;padding:6px 0">この日は欠席</div>`;
+    }
+
+    srecs.forEach(r => {
+      html += `<div style="margin-bottom:8px;display:flex;align-items:flex-start;gap:6px;flex-wrap:wrap">
+        <span class="hist-subj subj-${r.subject}">${r.subject}</span>
+        <div style="flex:1">
+          <div style="font-size:13px">${r.hasTest||r.has_test?'【テスト】'+(r.testContent||r.test_content||'')+'　→　':''}${r.instruction||''}${r.memo?'　📝'+r.memo:''}</div>
+          ${r.homework?`<div style="font-size:12px;color:#9d174d;margin-top:2px">📚 ${r.homework}</div>`:''}
+        </div>
+        <button onclick="openRecordEditById(${r.id})" style="background:var(--gray-1);border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;flex-shrink:0">✏️</button>
+      </div>`;
+    });
+
+    if (!absent && !hasRec) {
+      html += `<div style="font-size:12px;color:#ef4444;padding:4px 0">まだ指示が入力されていません</div>`;
+    }
+
+    html += '</div>';
+  });
+  el.innerHTML = html;
+}
+
+function goToInstrInput(encodedName) {
+  const name = decodeURIComponent(encodedName);
+  const students = getStudents();
+  const s = students.find(st => st.name === name);
+  if (!s) { showToast('⚠️ 生徒が見つかりません'); return; }
+  // 指示入力タブに切り替えて生徒を選択
+  switchTab('input');
+  // 少し待ってから生徒を選択（タブ切替アニメーション後）
+  setTimeout(() => {
+    selectStudent(s.id);
+  }, 100);
 }
 // INIT
 async function initApp() {
@@ -2404,7 +2641,8 @@ function renderPimTable() {
   } else if (is10min) {
     thead.innerHTML = `<tr style="${GR}">${TH('60px','No.')}${TH('','科目')}${TH('65px','実施日')}${TH('50px','合否')}${TH('50px','再テスト')}</tr>`;
   } else {
-    thead.innerHTML = `<tr style="${GR}">${TH('60px','STEP')}${TH('','タイトル')}${TH('65px','教科書P')}${TH('58px','実施日')}${TH('48px','確認CT')}${TH('55px','補習日')}${TH('48px','再CT')}${TH('45px','定期前')}${TH('52px','テスト範囲')}</tr>`;
+    const THD = (w,t,div=false) => `<th style="padding:7px 5px;text-align:center;border-bottom:2px solid var(--green-mid);white-space:nowrap;${div?'border-left:3px solid var(--green-light);':''}${w?'width:'+w:''}">${t}</th>`;
+    thead.innerHTML = `<tr style="${GR}">${TH('60px','STEP')}${TH('','タイトル')}${TH('65px','教科書P')}${TH('55px','実施日①')}${TH('55px','実施日②')}${TH('45px','CT①')}${THD('50px','補習日',true)}${TH('45px','CT②')}${THD('45px','CT③',true)}${TH('52px','テスト範囲')}</tr>`;
   }
 
   const nowD = new Date();
@@ -2414,6 +2652,7 @@ function renderPimTable() {
     // inp は map の中で r にアクセスできる
     const OPTS = {
       date: ['', todayStr, 'HW'],
+      date2: ['', todayStr, 'HW'],
       ct:   isSimple ? ['','○','×'] : ['','○','×','△','◎'],
       review: ['','済','未'],
       retest: isSimple ? ['','○','×'] : ['','○','×','△','◎'],
@@ -2463,11 +2702,12 @@ function renderPimTable() {
         <td style="padding:5px 5px;font-size:11px;color:var(--gray-3);vertical-align:middle;white-space:nowrap">${escH(r.step||'—')}</td>
         <td style="padding:5px 5px;font-size:12px;vertical-align:middle">${escH(r.title)}</td>
         <td style="padding:5px 5px;font-size:11px;color:var(--text-sub);text-align:center;white-space:nowrap;vertical-align:middle">${escH(r.page||'')}</td>
-        <td style="padding:3px;text-align:center;vertical-align:middle">${inp('date','6/9','55px')}</td>
+        <td style="padding:3px;text-align:center;vertical-align:middle">${inp('date','6/9','50px')}</td>
+        <td style="padding:3px;text-align:center;vertical-align:middle">${inp('date2','6/9','50px')}</td>
         <td style="padding:3px;text-align:center;vertical-align:middle">${inp('ct','○/×','40px')}</td>
-        <td style="padding:3px;text-align:center;vertical-align:middle">${inp('review','日付','46px')}</td>
+        <td style="padding:3px;text-align:center;vertical-align:middle;border-left:3px solid var(--green-light)">${inp('review','日付','46px')}</td>
         <td style="padding:3px;text-align:center;vertical-align:middle">${inp('retest','○/×','40px')}</td>
-        <td style="padding:3px;text-align:center;vertical-align:middle">${inp('precheck','◎/○','40px')}</td>
+        <td style="padding:3px;text-align:center;vertical-align:middle;border-left:3px solid var(--green-light)">${inp('precheck','◎/○','40px')}</td>
         <td style="padding:3px;text-align:center;vertical-align:middle">${rangeBtn}</td>
       </tr>`;
     }
