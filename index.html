@@ -890,8 +890,8 @@ function renderPimTable() {
   const GR = 'background:var(--green-p);position:sticky;top:0;z-index:5';
   const TH = (w,t) => `<th style="padding:7px 5px;text-align:center;border-bottom:2px solid var(--green-m);white-space:nowrap;${w?'width:'+w:''}">${t}</th>`;
 
-  const isKokugo = pimKey && pimKey.includes('国語文章題');
-  const is10min  = pimKey && pimKey.includes('10分テスト');
+  const isKokugo = pimKey && (pimKey.includes('国語文章題') || pimKey === 'kokugo');
+  const is10min  = pimKey && (pimKey.includes('10分テスト') || pimKey === 'test10');
   const isSimple = isKokugo || is10min;
 
   if (pimMode === 'master') {
