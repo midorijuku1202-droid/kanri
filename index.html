@@ -810,8 +810,40 @@ function renderSettings(q=''){
 function openAddStudent(){_editSid=null;document.getElementById('s-modal-title').textContent='生徒を追加';document.getElementById('m-name').value='';document.getElementById('m-yomi').value='';document.getElementById('m-grade').value='中1';document.getElementById('m-school').value='';document.getElementById('s-del-btn').style.display='none';setDays([]);document.getElementById('s-modal').classList.add('open');}
 function openEditStudent(id){_editSid=id;const s=S().find(st=>st.id===id);if(!s)return;document.getElementById('s-modal-title').textContent='生徒情報を編集';document.getElementById('m-name').value=s.name;document.getElementById('m-yomi').value=s.yomi;document.getElementById('m-grade').value=s.grade;document.getElementById('m-school').value=s.school||'';document.getElementById('s-del-btn').style.display='inline-block';setDays(getDays()[id]||[]);document.getElementById('s-modal').classList.add('open');}
 function closeSModal(){document.getElementById('s-modal').classList.remove('open');}
-function toggleDay(btn){const on=btn.classList.contains('on');if(!on){if(document.querySelectorAll('#day-btns .day-btn.on').length>=4){showToast('⚠️ 最大4日');return;}btn.classList.add('on');btn.style.cssText='';}else{btn.classList.remove('on');}}
-function setDays(days){document.querySelectorAll('#day-btns .day-btn').forEach(b=>{if((days||[]).includes(b.dataset.d))b.classList.add('on');else b.classList.remove('on');});}
+function toggleDay(btn){
+  const on = btn.classList.contains('on');
+  if(!on){
+    const count = document.querySelectorAll('#day-btns .day-btn.on').length;
+    if(count>=4){showToast('⚠️ 最大4日');return;}
+    btn.classList.add('on');
+    btn.style.background='var(--green)';
+    btn.style.color='white';
+    btn.style.borderColor='var(--green)';
+  } else {
+    btn.classList.remove('on');
+    btn.style.background='white';
+    btn.style.color='var(--green)';
+    btn.style.borderColor='';
+  }
+  // デバッグ：選択中の曜日を表示
+  const sel = getSelDays();
+  showToast('選択中: ' + (sel.length?sel.join('・'):'なし'));
+}
+function setDays(days){
+  document.querySelectorAll('#day-btns .day-btn').forEach(b=>{
+    if((days||[]).includes(b.dataset.d)){
+      b.classList.add('on');
+      b.style.background='var(--green)';
+      b.style.color='white';
+      b.style.borderColor='var(--green)';
+    } else {
+      b.classList.remove('on');
+      b.style.background='white';
+      b.style.color='var(--green)';
+      b.style.borderColor='';
+    }
+  });
+}
 function getSelDays(){return[...document.querySelectorAll('#day-btns .day-btn.on')].map(b=>b.dataset.d);}
 async function saveStudent(){
   const name=document.getElementById('m-name').value.trim();
