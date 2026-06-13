@@ -152,6 +152,7 @@ header small{font-size:11px;opacity:.7}
             <th style="width:34px">済</th>
             <th style="width:64px">日付</th>
             <th style="width:56px">科目</th>
+            <th style="width:60px">CT</th>
             <th>実施内容</th>
             <th>宿題</th>
             <th style="width:80px">メモ</th>
@@ -573,6 +574,20 @@ function openProgress(){
 }
 function openStudentProgress(){openProgress();}
 
+function insertStepToPlan(step) {
+  if (!step) return;
+  const focus = window._planFocus;
+  if (focus && focus.row !== undefined && focus.field) {
+    const cur = planRows[focus.row][focus.field] || '';
+    planRows[focus.row][focus.field] = cur ? cur + '　' + step : step;
+    renderPlanTable();
+    showToast('📝 ' + step + ' を追記しました');
+  } else {
+    showToast('⚠️ CT・実施内容・宿題のいずれかをタップしてから押してください');
+  }
+}
+
+
 function openProgressFromToday(sid){
   // 進捗表をpimオーバーレイで開く
   const ps = getPS();
@@ -595,16 +610,18 @@ function printPlanOnly(enc){
     ${entries.length ? `<table style="width:100%;border-collapse:collapse;font-size:11px">
       <thead><tr>
         <th style="background:#2d6a4f;color:white;padding:5px;border:1px solid #ccc;width:6%">済</th>
-        <th style="background:#2d6a4f;color:white;padding:5px;border:1px solid #ccc;width:11%">日付</th>
-        <th style="background:#2d6a4f;color:white;padding:5px;border:1px solid #ccc;width:10%">科目</th>
+        <th style="background:#2d6a4f;color:white;padding:5px;border:1px solid #ccc;width:10%">日付</th>
+        <th style="background:#2d6a4f;color:white;padding:5px;border:1px solid #ccc;width:9%">科目</th>
+        <th style="background:#2d6a4f;color:white;padding:5px;border:1px solid #ccc;width:12%">CT</th>
         <th style="background:#2d6a4f;color:white;padding:5px;border:1px solid #ccc">実施内容</th>
         <th style="background:#2d6a4f;color:white;padding:5px;border:1px solid #ccc">宿題</th>
-        <th style="background:#2d6a4f;color:white;padding:5px;border:1px solid #ccc;width:15%">メモ</th>
+        <th style="background:#2d6a4f;color:white;padding:5px;border:1px solid #ccc;width:12%">メモ</th>
       </tr></thead>
       <tbody>${entries.map(r=>`<tr style="${r.done?'background:#f0faf4;':''}">
         <td style="border:1px solid #ccc;padding:4px;text-align:center">${r.done?'✅':''}</td>
         <td style="border:1px solid #ccc;padding:4px;text-align:center">${esc(r.date||'')}</td>
         <td style="border:1px solid #ccc;padding:4px;text-align:center">${esc(r.subject||'')}</td>
+        <td style="border:1px solid #ccc;padding:4px">${esc(r.ct||'')}</td>
         <td style="border:1px solid #ccc;padding:4px">${esc(r.instruction||'')}</td>
         <td style="border:1px solid #ccc;padding:4px;color:#7c1d6f">${esc(r.homework||'')}</td>
         <td style="border:1px solid #ccc;padding:4px">${esc(r.memo||'')}</td>
@@ -634,12 +651,16 @@ function renderPlanTable(){
       <td><select class="ps ${r.date?'filled':''}" onchange="planRows[${i}].date=this.value;renderPlanTable()">${ds}</select></td>
       <td><select class="ps ${r.subject?'filled':''}" onchange="planRows[${i}].subject=this.value;renderPlanTable()">${ss}</select></td>
       <td>
+        <select class="ps" onchange="if(this.value){planRows[${i}].ct=(planRows[${i}].ct?planRows[${i}].ct+'　':'')+this.value;this.value='';renderPlanTable();}">${its}</select>
+        <input class="pi ${r.ct?'filled':''}" value="${escH(r.ct||'')}" oninput="planRows[${i}].ct=this.value" onfocus="window._planFocus={row:${i},field:'ct'}" placeholder="CT" style="margin-top:3px">
+      </td>
+      <td>
         <select class="ps" onchange="if(this.value){planRows[${i}].instruction=(planRows[${i}].instruction?planRows[${i}].instruction+'　':'')+this.value;this.value='';renderPlanTable();}">${its}</select>
-        <input class="pi ${r.instruction?'filled':''}" value="${esc(r.instruction||'')}" oninput="planRows[${i}].instruction=this.value" placeholder="実施内容" style="margin-top:3px">
+        <input class="pi ${r.instruction?'filled':''}" value="${esc(r.instruction||'')}" oninput="planRows[${i}].instruction=this.value" onfocus="window._planFocus={row:${i},field:'instruction'}" placeholder="実施内容" style="margin-top:3px">
       </td>
       <td>
         <select class="ps" onchange="if(this.value){planRows[${i}].homework=(planRows[${i}].homework?planRows[${i}].homework+'　':'')+this.value;this.value='';renderPlanTable();}">${hts}</select>
-        <input class="pi ${r.homework?'filled':''}" value="${esc(r.homework||'')}" oninput="planRows[${i}].homework=this.value" placeholder="宿題" style="margin-top:3px">
+        <input class="pi ${r.homework?'filled':''}" value="${esc(r.homework||'')}" oninput="planRows[${i}].homework=this.value" onfocus="window._planFocus={row:${i},field:'homework'}" placeholder="宿題" style="margin-top:3px">
       </td>
       <td><input class="pi" value="${esc(r.memo||'')}" oninput="planRows[${i}].memo=this.value" placeholder="メモ"></td>
     </tr>`;
@@ -969,7 +990,9 @@ function renderPimTable() {
       </tr>`;
     } else {
       return `<tr id="pimr${i}" style="border-bottom:1px solid var(--gray1);${bgRow}${borderT}${borderB}">
-        <td style="padding:5px 5px;font-size:11px;font-weight:700;color:#1a2e20;vertical-align:middle;white-space:nowrap">${escH(r.step||'—')}</td>
+        <td style="padding:5px 5px;font-size:11px;font-weight:700;color:#1a2e20;vertical-align:middle;white-space:nowrap">
+          <button onclick="insertStepToPlan('${escH(r.step||'')}')" style="background:var(--green-p);border:1px solid var(--green-m);border-radius:6px;padding:3px 6px;font-size:11px;font-weight:700;cursor:pointer;color:var(--green);white-space:nowrap">${escH(r.step||'—')}</button>
+        </td>
         <td style="padding:5px 5px;font-size:12px;color:var(--gray3);vertical-align:middle">${escH(r.title)}</td>
         <td style="padding:5px 5px;font-size:11px;font-weight:700;color:#1a2e20;text-align:center;white-space:nowrap;vertical-align:middle">${escH(r.page||'')}</td>
         <td style="padding:3px;text-align:center;vertical-align:middle">${inp('date','6/9','50px')}</td>
@@ -1782,7 +1805,7 @@ function shareStudent(enc){
     html+=`<div style="font-size:13px;font-weight:700;background:#e8f5ee;padding:6px 10px;border-radius:6px;margin-bottom:8px">📋 学習計画シート</div>`;
     html+=`<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:16px"><thead><tr><th style="background:#2d6a4f;color:white;padding:5px;border:1px solid #ccc;width:8%">済</th><th style="background:#2d6a4f;color:white;padding:5px;border:1px solid #ccc;width:12%">日付</th><th style="background:#2d6a4f;color:white;padding:5px;border:1px solid #ccc;width:10%">科目</th><th style="background:#2d6a4f;color:white;padding:5px;border:1px solid #ccc">実施内容</th><th style="background:#2d6a4f;color:white;padding:5px;border:1px solid #ccc">宿題</th><th style="background:#2d6a4f;color:white;padding:5px;border:1px solid #ccc;width:15%">メモ</th></tr></thead><tbody>`;
     entries.forEach(r=>{
-      html+=`<tr style="${r.done?'background:#f0faf4;':''}"><td style="border:1px solid #ccc;padding:4px;text-align:center">${r.done?'✅':''}</td><td style="border:1px solid #ccc;padding:4px;text-align:center">${esc(r.date||'')}</td><td style="border:1px solid #ccc;padding:4px;text-align:center">${esc(r.subject||'')}</td><td style="border:1px solid #ccc;padding:4px">${esc(r.instruction||'')}</td><td style="border:1px solid #ccc;padding:4px;color:#7c1d6f">${esc(r.homework||'')}</td><td style="border:1px solid #ccc;padding:4px">${esc(r.memo||'')}</td></tr>`;
+      html+=`<tr style="${r.done?'background:#f0faf4;':''}"><td style="border:1px solid #ccc;padding:4px;text-align:center">${r.done?'✅':''}</td><td style="border:1px solid #ccc;padding:4px;text-align:center">${esc(r.date||'')}</td><td style="border:1px solid #ccc;padding:4px;text-align:center">${esc(r.subject||'')}</td><td style="border:1px solid #ccc;padding:4px">${esc(r.ct||'')}</td><td style="border:1px solid #ccc;padding:4px">${esc(r.instruction||'')}</td><td style="border:1px solid #ccc;padding:4px;color:#7c1d6f">${esc(r.homework||'')}</td><td style="border:1px solid #ccc;padding:4px">${esc(r.memo||'')}</td></tr>`;
     });
     html+='</tbody></table>';
   }
