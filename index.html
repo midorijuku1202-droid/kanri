@@ -609,13 +609,13 @@ function printPlanOnly(enc){
     <div style="text-align:center;font-size:13px;font-weight:700;margin-bottom:12px">${esc(name)}（${s?.grade||''} ${s?.school||''}）</div>
     ${entries.length ? `<table style="width:100%;border-collapse:collapse;font-size:11px">
       <thead><tr>
-        <th style="background:#2d6a4f;color:white;padding:5px;border:1px solid #ccc;width:6%">済</th>
-        <th style="background:#2d6a4f;color:white;padding:5px;border:1px solid #ccc;width:10%">日付</th>
-        <th style="background:#2d6a4f;color:white;padding:5px;border:1px solid #ccc;width:9%">科目</th>
-        <th style="background:#2d6a4f;color:white;padding:5px;border:1px solid #ccc;width:12%">CT</th>
-        <th style="background:#2d6a4f;color:white;padding:5px;border:1px solid #ccc">実施内容</th>
-        <th style="background:#2d6a4f;color:white;padding:5px;border:1px solid #ccc">宿題</th>
-        <th style="background:#2d6a4f;color:white;padding:5px;border:1px solid #ccc;width:12%">メモ</th>
+        <th style="background:#2d6a4f;color:white;padding:5px;border:1px solid #ccc;width:5%">済</th>
+        <th style="background:#2d6a4f;color:white;padding:5px;border:1px solid #ccc;width:8%">日付</th>
+        <th style="background:#2d6a4f;color:white;padding:5px;border:1px solid #ccc;width:7%">科目</th>
+        <th style="background:#2d6a4f;color:white;padding:5px;border:1px solid #ccc;width:22%">CT</th>
+        <th style="background:#2d6a4f;color:white;padding:5px;border:1px solid #ccc;width:25%">実施内容</th>
+        <th style="background:#2d6a4f;color:white;padding:5px;border:1px solid #ccc;width:22%">宿題</th>
+        <th style="background:#2d6a4f;color:white;padding:5px;border:1px solid #ccc;width:11%">メモ</th>
       </tr></thead>
       <tbody>${entries.map(r=>`<tr style="${r.done?'background:#f0faf4;':''}">
         <td style="border:1px solid #ccc;padding:4px;text-align:center">${r.done?'✅':''}</td>
