@@ -1929,12 +1929,32 @@ async function initApp(){
     if(!_ps)_ps={};
     if(!_cm)_cm={};
   }
-  renderStudentGrid();
   // 全データが確実に入っているか保証
   if(!_students||!_students.length) _students=BASE_STUDENTS.map((s,i)=>({...s,id:'s'+i}));
   if(!_ps) _ps={};
   if(!_cm) _cm={};
+  // localStorageの曜日データをSupabaseにバックアップ（起動時に自動同期）
+  syncDaysToSupabase();
+  renderStudentGrid();
   document.getElementById('loading').classList.add('hide');
+}
+
+// localStorageの曜日データをSupabaseに同期
+async function syncDaysToSupabase(){
+  try {
+    const localDays = ls('midori_days');
+    if (!localDays || !Object.keys(localDays).length) return;
+    const students = S();
+    for (const s of students) {
+      const localD = localDays[s.id];
+      const dbD = s.days ? JSON.parse(s.days) : [];
+      // localStorageにデータがあってDBが空の場合はDBに保存
+      if (localD && localD.length > 0 && dbD.length === 0) {
+        await sbPatch('students','id=eq.'+encodeURIComponent(s.id),{days:JSON.stringify(localD)});
+        s.days = JSON.stringify(localD);
+      }
+    }
+  } catch(e) { console.error('syncDays error', e); }
 }
 document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('today-dp').value=todayKey();
