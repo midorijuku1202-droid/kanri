@@ -185,7 +185,6 @@ header small{font-size:11px;opacity:.7}
 <!-- 生徒管理 -->
 <div id="view-settings" class="view">
   <button class="btn btn-green" style="width:100%;margin-bottom:12px" onclick="openAddStudent()">＋ 生徒を追加</button>
-  <button class="btn" style="width:100%;margin-bottom:12px;background:#f0f0f0;color:#333;font-size:11px" onclick="showDaysData()">🔍 曜日データを確認</button>
   <div class="grade-row">
     <button class="gbtn active" onclick="setSettingsGrade('all',this)">全員</button>
     <button class="gbtn" onclick="setSettingsGrade('中1',this)">中1</button>
@@ -601,24 +600,6 @@ function openProgress(){
 }
 function openStudentProgress(){openProgress();}
 
-function showDaysData() {
-  const raw = localStorage.getItem('midori_days');
-  if (!raw || raw === 'null' || raw === '{}') {
-    showToast('localStorageに曜日データなし', 4000);
-    alert('midori_days: ' + raw);
-    return;
-  }
-  try {
-    const d = JSON.parse(raw);
-    const keys = Object.keys(d);
-    const withDays = keys.filter(k=>d[k]&&d[k].length>0);
-    alert('曜日登録あり: ' + withDays.length + '人\n\n' + 
-      withDays.slice(0,10).map(k=>k+': '+d[k].join('・')).join('\n') +
-      (withDays.length>10?'\n...他'+(withDays.length-10)+'人':''));
-  } catch(e) {
-    alert('エラー: ' + e.message);
-  }
-}
 
 
 function insertStepToPlan(step) {
@@ -846,9 +827,6 @@ function toggleDay(btn){
     btn.style.color='var(--green)';
     btn.style.borderColor='';
   }
-  // デバッグ：選択中の曜日を表示
-  const sel = getSelDays();
-  showToast('選択中: ' + (sel.length?sel.join('・'):'なし'));
 }
 function setDays(days){
   document.querySelectorAll('#day-btns .day-btn').forEach(b=>{
@@ -880,7 +858,6 @@ async function saveStudent(){
     const sc=getDays();sc[_editSid]=days;lss('midori_days',sc);
     try{
       await sbPatch('students','id=eq.'+encodeURIComponent(_editSid),{name,yomi,grade,school,days:JSON.stringify(days)});
-      showToast('✅ DB保存完了');
     }catch(e){
       showToast('⚠️ DB保存エラー: '+e.message);
       console.error(e);
