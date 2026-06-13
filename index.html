@@ -451,8 +451,15 @@ function getCustomMaster(){return _cm||{};}
 async function loadStudents(){
   try{
     const rows=await sbGet('students','select=*&order=grade.asc,name.asc');
-    if(rows&&rows.length){_students=rows;}
-    else{
+    if(rows&&rows.length){
+      _students=rows;
+      // days列からlocalStorageに同期
+      const sc={};
+      rows.forEach(r=>{
+        try{ const d=JSON.parse(r.days||'[]'); if(d.length) sc[r.id]=d; }catch(e){}
+      });
+      if(Object.keys(sc).length) lss('midori_days',sc);
+    } else {
       const list=BASE_STUDENTS.map((s,i)=>({id:'s'+i,name:s.name,yomi:s.yomi,grade:s.grade,school:s.school}));
       for(let i=0;i<list.length;i+=50)await sbPost('students',list.slice(i,i+50));
       _students=list;
@@ -818,12 +825,12 @@ async function saveStudent(){
     const idx=_students.findIndex(s=>s.id===_editSid);
     if(idx>=0)_students[idx]={..._students[idx],name,yomi,grade,school};
     const sc=getDays();sc[_editSid]=days;lss('midori_days',sc);
-    try{await sbPatch('students','id=eq.'+encodeURIComponent(_editSid),{name,yomi,grade,school});}catch(e){console.error(e);}
+    try{await sbPatch('students','id=eq.'+encodeURIComponent(_editSid),{name,yomi,grade,school,days:JSON.stringify(days)});}catch(e){console.error(e);}
   }else{
     const id='s'+Date.now();
     _students.push({id,name,yomi,grade,school});
     const sc=getDays();sc[id]=days;lss('midori_days',sc);
-    try{await sbPost('students',{id,name,yomi,grade,school});}catch(e){console.error(e);}
+    try{await sbPost('students',{id,name,yomi,grade,school,days:JSON.stringify(days)});}catch(e){console.error(e);}
   }
   closeSModal();renderSettings();showToast('✅ 保存しました');
 }
