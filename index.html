@@ -513,12 +513,29 @@ function switchTab(tab){
   const ti=['input','today','settings','progress','share'].indexOf(tab);
   const tbs=document.querySelectorAll('.tab-btn');
   if(ti>=0&&tbs[ti])tbs[ti].classList.add('active');
-  if(tab==='today') renderToday();
+
+  const sinceLastSave = Date.now() - (_lastSave||0);
+  const needRefresh = sinceLastSave > 3000;
+
+  if(tab==='input'){
+    if(needRefresh) loadStudents().then(()=>renderStudentGrid());
+    else renderStudentGrid();
+  }
+  if(tab==='today'){
+    if(needRefresh) Promise.all([loadStudents(),loadPS()]).then(()=>renderToday());
+    else renderToday();
+  }
   if(tab==='settings'){
     loadStudents().then(()=>renderSettings());
   }
-  if(tab==='progress') renderProgressList();
-  if(tab==='share') renderShare();
+  if(tab==='progress'){
+    if(needRefresh) Promise.all([loadStudents(),loadPS()]).then(()=>renderProgressList());
+    else renderProgressList();
+  }
+  if(tab==='share'){
+    if(needRefresh) loadStudents().then(()=>renderShare());
+    else renderShare();
+  }
 }
 
 // ===== 指示入力 =====
