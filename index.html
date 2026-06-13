@@ -514,7 +514,9 @@ function switchTab(tab){
   const tbs=document.querySelectorAll('.tab-btn');
   if(ti>=0&&tbs[ti])tbs[ti].classList.add('active');
   if(tab==='today') renderToday();
-  if(tab==='settings') renderSettings();
+  if(tab==='settings'){
+    loadStudents().then(()=>renderSettings());
+  }
   if(tab==='progress') renderProgressList();
   if(tab==='share') renderShare();
 }
