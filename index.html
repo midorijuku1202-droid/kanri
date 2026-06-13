@@ -825,7 +825,13 @@ async function saveStudent(){
     const idx=_students.findIndex(s=>s.id===_editSid);
     if(idx>=0)_students[idx]={..._students[idx],name,yomi,grade,school};
     const sc=getDays();sc[_editSid]=days;lss('midori_days',sc);
-    try{await sbPatch('students','id=eq.'+encodeURIComponent(_editSid),{name,yomi,grade,school,days:JSON.stringify(days)});}catch(e){console.error(e);}
+    try{
+      await sbPatch('students','id=eq.'+encodeURIComponent(_editSid),{name,yomi,grade,school,days:JSON.stringify(days)});
+      showToast('✅ DB保存完了');
+    }catch(e){
+      showToast('⚠️ DB保存エラー: '+e.message);
+      console.error(e);
+    }
   }else{
     const id='s'+Date.now();
     _students.push({id,name,yomi,grade,school});
